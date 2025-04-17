@@ -1,0 +1,122 @@
+<mxfile host="65bd71144e">
+    <diagram id="7jtfEy5J7K_Og2NrLwB5" name="Page-1">
+        <mxGraphModel dx="709" dy="399" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="USB 1 - MIDI IN" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="100" y="100" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="USB 2 - MIDI IN" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="380" y="100" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="USB 1 - MIDI OUT" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="240" y="100" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="USB 2 - MIDI OUT" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="520" y="100" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="DIN 1" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="100" y="240" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="DIN 3" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="380" y="240" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="DIN 2" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="240" y="240" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="DIN 4" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="520" y="240" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="MPMapping" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="570" y="360" width="140" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="[] MPInput" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="13">
+                    <mxGeometry y="30" width="140" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" value="[] MPOutput" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="13">
+                    <mxGeometry y="60" width="140" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="16" value="[] MPTransforms" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="13">
+                    <mxGeometry y="90" width="140" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="21" value="MPPortType" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="50" y="360" width="140" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="23" value="0: USB" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="21">
+                    <mxGeometry y="30" width="140" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="24" value="1: DIN" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="21">
+                    <mxGeometry y="60" width="140" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="27" style="edgeStyle=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="23" target="33">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="32" value="struct MPPortConfig" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fontSize=13;labelBackgroundColor=default;fillColor=default;swimlaneLine=1;columnLines=1;rowLines=1;swimlaneHead=1;swimlaneBody=1;horizontal=1;left=0;right=0;bottom=0;resizeLast=0;top=0;strokeColor=default;" vertex="1" parent="1">
+                    <mxGeometry x="270" y="360" width="213" height="200" as="geometry"/>
+                </mxCell>
+                <mxCell id="33" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;strokeColor=inherit;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=16;" vertex="1" parent="32">
+                    <mxGeometry y="30" width="213" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="34" value="type MPPortType" style="shape=partialRectangle;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=12;gradientColor=default;fontColor=light-dark(#000000, #ffffff);" vertex="1" parent="33">
+                    <mxGeometry width="107" height="30" as="geometry">
+                        <mxRectangle width="107" height="30" as="alternateBounds"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="35" value="-" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=12;fontColor=light-dark(#000000, #ffffff);" vertex="1" parent="33">
+                    <mxGeometry x="107" width="106" height="30" as="geometry">
+                        <mxRectangle width="106" height="30" as="alternateBounds"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="37" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;strokeColor=inherit;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=16;" vertex="1" parent="32">
+                    <mxGeometry y="60" width="213" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="38" value="id string" style="shape=partialRectangle;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=12;gradientColor=default;fontColor=light-dark(#000000, #ffffff);" vertex="1" parent="37">
+                    <mxGeometry width="107" height="40" as="geometry">
+                        <mxRectangle width="107" height="40" as="alternateBounds"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="39" value="DIN1, usb-JT400..." style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=12;fontColor=light-dark(#000000, #ffffff);" vertex="1" parent="37">
+                    <mxGeometry x="107" width="106" height="40" as="geometry">
+                        <mxRectangle width="106" height="40" as="alternateBounds"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="41" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;strokeColor=inherit;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=16;" vertex="1" parent="32">
+                    <mxGeometry y="100" width="213" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="42" value="path string" style="shape=partialRectangle;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=12;gradientColor=default;fontColor=light-dark(#000000, #ffffff);" vertex="1" parent="41">
+                    <mxGeometry width="107" height="40" as="geometry">
+                        <mxRectangle width="107" height="40" as="alternateBounds"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="43" value="/dev/ttyAMA0" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=12;fontColor=light-dark(#000000, #ffffff);" vertex="1" parent="41">
+                    <mxGeometry x="107" width="106" height="40" as="geometry">
+                        <mxRectangle width="106" height="40" as="alternateBounds"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="46" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;strokeColor=inherit;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=16;" vertex="1" parent="32">
+                    <mxGeometry y="140" width="213" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="47" value="direction MPPortDirection" style="shape=partialRectangle;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=12;gradientColor=default;fontColor=light-dark(#000000, #ffffff);" vertex="1" parent="46">
+                    <mxGeometry width="107" height="60" as="geometry">
+                        <mxRectangle width="107" height="60" as="alternateBounds"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="48" value="The same USB could have two port configs.&amp;nbsp;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=12;fontColor=light-dark(#000000, #ffffff);" vertex="1" parent="46">
+                    <mxGeometry x="107" width="106" height="60" as="geometry">
+                        <mxRectangle width="106" height="60" as="alternateBounds"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="49" value="MPPortDirection" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="50" y="480" width="140" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="50" value="0: INPUT" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="49">
+                    <mxGeometry y="30" width="140" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="51" value="1: OUTPUT" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="49">
+                    <mxGeometry y="60" width="140" height="30" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
