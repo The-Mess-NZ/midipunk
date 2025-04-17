@@ -9,13 +9,12 @@ import (
 	"go.bug.st/serial"
 )
 
-// func readSerial(ch chan midi.Message) {
-func readSerial() {
+func readSerial(ch chan midi.Message) {
 	mode := &serial.Mode{
 		BaudRate: 38400,
 	}
 
-	port, err := serial.Open("/dev/ttyAMA5", mode)
+	port, err := serial.Open("/dev/ttyAMA2", mode)
 
 	if err != nil {
 		log.Fatal(err)
@@ -23,7 +22,7 @@ func readSerial() {
 
 	defer port.Close()
 
-	buf := make([]byte, 8)
+	buf := make([]byte, 3)
 
 	for {
 		n, err := port.Read(buf)
@@ -33,16 +32,26 @@ func readSerial() {
 		}
 
 		if n > 0 {
-			fmt.Printf("Received: %x\n", buf[:n])
-			// msg := midi.Message(buf[:n])
-			// ch <- msg
+			// fmt.Printf("Received: %x\n", buf[:n])
+			msg := midi.Message(buf[:n])
+			fmt.Printf("Received Serial Message: %s\n", msg)
+			ch <- msg
 		}
 	}
 }
 
-func handleMessage(msg midi.Message, timestamps int32) {
+func handleUsbMessage(msg midi.Message, timestamps int32, ch chan midi.Message) {
 	// Handle the MIDI message
 	fmt.Printf("MIDI Message: %s\n", msg)
+
+	ch <- msg
+}
+
+func handleChannelMessage(ch chan midi.Message) {
+	for msg := range ch {
+		// Process the message received from the channel
+		fmt.Printf("Channel Message: %s\n", msg)
+	}
 }
 
 func main() {
@@ -56,14 +65,22 @@ func main() {
 		log.Fatal(err)
 	}
 
-	stop, _ := midi.ListenTo(in, handleMessage)
+	// Create a communication channel
+	ch := make(chan midi.Message)
+
+	stop, _ := midi.ListenTo(
+		in,
+		func(msg midi.Message, timestamps int32) {
+			handleUsbMessage(msg, timestamps, ch)
+		},
+	)
 	defer stop()
 
-	// Create a communication channel
-	// ch := make(chan midi.Message)
-
 	// Start reading from serial port
-	go readSerial()
+	go readSerial(ch)
+
+	// Start a goroutine to handle messages from the channel
+	go handleChannelMessage(ch)
 
 	// Keep main thread running
 	select {}
