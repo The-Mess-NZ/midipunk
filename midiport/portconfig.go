@@ -3,6 +3,8 @@ package midiport
 import (
 	"fmt"
 	"log"
+	"os/exec"
+	"strings"
 
 	midi "gitlab.com/gomidi/midi/v2"
 	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv"
@@ -20,6 +22,7 @@ type PortConfig struct {
 	id        string
 	path      string
 	direction PortDirection
+	Name      string // Add Name field
 }
 
 // NewUSBPortConfig creates a new PortConfig for a USB MIDI device
@@ -29,6 +32,7 @@ func NewUSBPortConfig(id string, direction PortDirection) *PortConfig {
 		id:        id,
 		path:      "", // USB ports don't use path
 		direction: direction,
+		Name:      id, // Use id as name for now
 	}
 }
 
@@ -39,6 +43,7 @@ func NewDINPortConfig(id string, path string, direction PortDirection) *PortConf
 		id:        id,
 		path:      path,
 		direction: direction,
+		Name:      id, // Use id as name for now
 	}
 }
 
@@ -79,6 +84,33 @@ func (pc *PortConfig) String() string {
 	}
 
 	return fmt.Sprintf("Port[%s %s %s %s]", typeStr, dirStr, pc.id, pc.path)
+}
+
+// GetPortFullName returns the full name of the port, e.g. 'Oxygen Pro Mini USB MIDI'
+func (pc *PortConfig) GetPortFullName() string {
+	if pc.portType == USB {
+		// Try to get full name from aconnect -i
+		aconnectOut, err := exec.Command("aconnect", "-i").Output()
+		if err == nil {
+			lines := strings.Split(string(aconnectOut), "\n")
+			clientNum := pc.id
+			for _, line := range lines {
+				if strings.Contains(line, "client "+clientNum+":") {
+					// Next lines are ports for this client
+					for i := 1; i <= 4; i++ {
+						if len(lines) > i {
+							portLine := lines[i]
+							if strings.Contains(portLine, "'") {
+								name := strings.TrimSpace(strings.Split(portLine, "'")[1])
+								return name
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return pc.Name
 }
 
 // StartListening starts listening for MIDI messages on this port

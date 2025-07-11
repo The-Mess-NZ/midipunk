@@ -3,6 +3,7 @@ package midiport
 import (
 	"log"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -13,41 +14,50 @@ events, with pertinent device data, such as name, and port number.
 */
 // USBDeviceEvent represents a USB MIDI device connection event
 // For now, just log details
-func UsbDeviceDetect() {
+func UsbDeviceDetect(pollIntervalSeconds int, eventChan chan<- struct{}) {
 	watchPath := "/dev/snd"
-	prevDevices := map[string]os.FileInfo{}
+	prevDevices := map[string]struct{}{}
 
 	for {
-		currentDevices := map[string]os.FileInfo{}
-		// List all files in /dev/snd
+		currentDevices := map[string]struct{}{}
+
 		files, err := os.ReadDir(watchPath)
 		if err != nil {
 			log.Printf("Error reading %s: %v", watchPath, err)
-			time.Sleep(2 * time.Second)
+			time.Sleep(time.Duration(pollIntervalSeconds) * time.Second)
 			continue
 		}
+
 		for _, f := range files {
-			if !f.IsDir() {
-				info, err := f.Info()
-				if err == nil {
-					currentDevices[f.Name()] = info
-				}
+			if f.IsDir() || !strings.Contains(f.Name(), "midi") {
+				continue
 			}
+
+			currentDevices[f.Name()] = struct{}{}
 		}
+
+		changed := false
 		// Detect new devices
-		for name, info := range currentDevices {
-			if _, found := prevDevices[name]; !found {
-				log.Printf("USB MIDI device connected: %s (size: %d bytes)", name, info.Size())
+		for fname := range currentDevices {
+			if _, found := prevDevices[fname]; !found {
+				log.Printf("USB MIDI device connected: %s", fname)
+				changed = true
 			}
 		}
 		// Detect removed devices
-		for name := range prevDevices {
-			if _, found := currentDevices[name]; !found {
-				log.Printf("USB MIDI device disconnected: %s", name)
+		for fname := range prevDevices {
+			if _, found := currentDevices[fname]; !found {
+				log.Printf("USB MIDI device disconnected: %s", fname)
+				changed = true
 			}
 		}
+
+		if changed {
+			eventChan <- struct{}{}
+		}
+
 		prevDevices = currentDevices
-		// Poll every 2 seconds
-		time.Sleep(2 * time.Second)
+
+		time.Sleep(time.Duration(pollIntervalSeconds) * time.Second)
 	}
 }

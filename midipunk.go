@@ -41,9 +41,18 @@ func main() {
 	defer router.Stop()
 
 	// Start USB device watcher in a goroutine
-	go midiport.UsbDeviceDetect()
+	deviceEventChan := make(chan struct{})
+	go midiport.UsbDeviceDetect(2, deviceEventChan)
 
 	fmt.Println("MidiPunk router started. Press Ctrl+C to exit...")
+
+	// Listen for device events and print updated MIDI ports
+	go func() {
+		for range deviceEventChan {
+			fmt.Println("MIDI device change detected!")
+			fmt.Println("Available MIDI ports:", midi.GetInPorts())
+		}
+	}()
 
 	// Keep main thread running
 	select {}
