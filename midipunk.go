@@ -40,6 +40,9 @@ func main() {
 
 	defer router.Stop()
 
+	// Start USB device watcher in a goroutine
+	go midiport.UsbDeviceDetect()
+
 	fmt.Println("MidiPunk router started. Press Ctrl+C to exit...")
 
 	// Keep main thread running
