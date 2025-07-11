@@ -1,0 +1,38 @@
+package midirouter
+
+/*
+A Route takes multiple inputs, and distributes the MIDI
+messages to the given outputs.
+*/
+type Route struct {
+	inputs  []*RouteInput
+	outputs []*RouteOutput
+}
+
+// NewRoute creates a new Route
+func NewRoute(inputs []*RouteInput, outputs []*RouteOutput) *Route {
+	return &Route{
+		inputs:  inputs,
+		outputs: outputs,
+	}
+}
+
+// GetInputs returns the route inputs
+func (r *Route) GetInputs() []*RouteInput {
+	return r.inputs
+}
+
+// GetOutputs returns the route outputs
+func (r *Route) GetOutputs() []*RouteOutput {
+	return r.outputs
+}
+
+// AddInput adds an input to the route
+func (r *Route) AddInput(input *RouteInput) {
+	r.inputs = append(r.inputs, input)
+}
+
+// AddOutput adds an output to the route
+func (r *Route) AddOutput(output *RouteOutput) {
+	r.outputs = append(r.outputs, output)
+}
