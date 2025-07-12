@@ -7,13 +7,15 @@ messages to the given outputs.
 type Route struct {
 	inputs  []*RouteInput
 	outputs []*RouteOutput
+	Label   string // Label for UI
 }
 
 // NewRoute creates a new Route
-func NewRoute(inputs []*RouteInput, outputs []*RouteOutput) *Route {
+func NewRoute(inputs []*RouteInput, outputs []*RouteOutput, label string) *Route {
 	return &Route{
 		inputs:  inputs,
 		outputs: outputs,
+		Label:   label,
 	}
 }
 

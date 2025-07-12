@@ -11,6 +11,7 @@ import (
 const configPath = "config.yaml"
 
 type Config struct {
+	Label  string                   `yaml:"label"`
 	Ports  []map[string]interface{} `yaml:"ports"`
 	Routes []map[string]interface{} `yaml:"routes"`
 }

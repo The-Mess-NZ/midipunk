@@ -26,10 +26,14 @@ func main() {
 	portMap := make(map[string]*midiport.PortConfig)
 	for _, p := range cfg.Ports {
 		var pc *midiport.PortConfig
+		label := p.Label
+		if label == "" && p.Device != "" {
+			label = p.Device
+		}
 		if p.Type == "USB" {
-			pc = midiport.NewUSBPortConfig(p.ID, midiport.PortDirectionFromString(p.Direction))
+			pc = midiport.NewUSBPortConfig(p.ID, midiport.PortDirectionFromString(p.Direction), label)
 		} else if p.Type == "DIN" {
-			pc = midiport.NewDINPortConfig(p.ID, p.Device, midiport.PortDirectionFromString(p.Direction))
+			pc = midiport.NewDINPortConfig(p.ID, p.Device, midiport.PortDirectionFromString(p.Direction), label)
 		}
 		portMap[p.ID] = pc
 	}
@@ -44,7 +48,7 @@ func main() {
 				if ch == 0 {
 					ch = 1 // default to channel 1 if not set
 				}
-				inputs = append(inputs, midirouter.NewRouteInput(uint8(ch), pc))
+				inputs = append(inputs, midirouter.NewRouteInput(uint8(ch), pc, in.Label))
 			}
 		}
 		var outputs []*midirouter.RouteOutput
@@ -54,10 +58,10 @@ func main() {
 				if ch == 0 {
 					ch = 1 // default to channel 1 if not set
 				}
-				outputs = append(outputs, midirouter.NewRouteOutput(uint8(ch), pc))
+				outputs = append(outputs, midirouter.NewRouteOutput(uint8(ch), pc, out.Label))
 			}
 		}
-		route := midirouter.NewRoute(inputs, outputs)
+		route := midirouter.NewRoute(inputs, outputs, r.Label)
 		routes = append(routes, route)
 	}
 

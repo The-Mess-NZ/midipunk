@@ -10,13 +10,15 @@ This can be used in a Route's outputs.
 type RouteOutput struct {
 	channel    uint8
 	portConfig *midiport.PortConfig
+	Label      string // Label for UI
 }
 
 // NewRouteOutput creates a new RouteOutput
-func NewRouteOutput(channel uint8, portConfig *midiport.PortConfig) *RouteOutput {
+func NewRouteOutput(channel uint8, portConfig *midiport.PortConfig, label string) *RouteOutput {
 	return &RouteOutput{
 		channel:    channel,
 		portConfig: portConfig,
+		Label:      label,
 	}
 }
 

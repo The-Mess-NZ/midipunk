@@ -22,28 +22,31 @@ type PortConfig struct {
 	id        string
 	path      string
 	direction PortDirection
-	Name      string // Add Name field
+	Name      string // legacy name field
+	Label     string // Label field for UI, set from config
 }
 
 // NewUSBPortConfig creates a new PortConfig for a USB MIDI device
-func NewUSBPortConfig(id string, direction PortDirection) *PortConfig {
+func NewUSBPortConfig(id string, direction PortDirection, label string) *PortConfig {
 	return &PortConfig{
 		portType:  USB,
 		id:        id,
 		path:      "", // USB ports don't use path
 		direction: direction,
-		Name:      id, // Use id as name for now
+		Name:      id, // legacy
+		Label:     label,
 	}
 }
 
 // NewDINPortConfig creates a new PortConfig for a DIN MIDI device
-func NewDINPortConfig(id string, path string, direction PortDirection) *PortConfig {
+func NewDINPortConfig(id string, path string, direction PortDirection, label string) *PortConfig {
 	return &PortConfig{
 		portType:  DIN,
 		id:        id,
 		path:      path,
 		direction: direction,
-		Name:      id, // Use id as name for now
+		Name:      id, // legacy
+		Label:     label,
 	}
 }
 

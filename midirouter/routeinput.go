@@ -13,13 +13,15 @@ This can be used in a Route's inputs.
 type RouteInput struct {
 	channel    uint8
 	portConfig *midiport.PortConfig
+	Label      string // Label for UI
 }
 
 // NewRouteInput creates a new RouteInput
-func NewRouteInput(channel uint8, portConfig *midiport.PortConfig) *RouteInput {
+func NewRouteInput(channel uint8, portConfig *midiport.PortConfig, label string) *RouteInput {
 	return &RouteInput{
 		channel:    channel,
 		portConfig: portConfig,
+		Label:      label,
 	}
 }
 
