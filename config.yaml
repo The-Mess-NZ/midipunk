@@ -1,0 +1,18 @@
+# MidiPunk configuration
+ports:
+  - id: "1"
+    type: "USB"
+    direction: "INPUT"
+  - id: "din1"
+    type: "DIN"
+    device: "/dev/ttyAMA2"
+    direction: "INPUT"
+routes:
+  - inputs:
+      - port_id: "1"
+      - port_id: "din1"
+    outputs:
+      - port_id: "1"
+        channel: 1
+      - port_id: "din1"
+        channel: 1

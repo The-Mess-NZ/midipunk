@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/The-Mess-NZ/midipunk/config"
 	"github.com/The-Mess-NZ/midipunk/midiport"
 	"github.com/The-Mess-NZ/midipunk/midirouter"
 
@@ -14,26 +15,55 @@ import (
 func main() {
 	defer midi.CloseDriver()
 
-	fmt.Println("Available MIDI ports:", midi.GetInPorts())
+	// Load configuration from YAML
+	cfg, err := config.LoadConfig("config.yaml")
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
 
-	// Create port configurations
-	usbInputPort := midiport.NewUSBPortConfig("1", midiport.INPUT)
-	dinInputPort := midiport.NewDINPortConfig("din1", "/dev/ttyAMA2", midiport.INPUT)
+	// Create port configurations from config
+	portMap := make(map[string]*midiport.PortConfig)
+	for _, p := range cfg.Ports {
+		var pc *midiport.PortConfig
+		if p.Type == "USB" {
+			pc = midiport.NewUSBPortConfig(p.ID, midiport.PortDirectionFromString(p.Direction))
+		} else if p.Type == "DIN" {
+			pc = midiport.NewDINPortConfig(p.ID, p.Device, midiport.PortDirectionFromString(p.Direction))
+		}
+		portMap[p.ID] = pc
+	}
 
-	fmt.Printf("Created USB port: %s\n", usbInputPort.String())
-	fmt.Printf("Created DIN port: %s\n", dinInputPort.String())
-
-	// Create route inputs
-	usbInput := midirouter.NewRouteInput(1, usbInputPort)
-	dinInput := midirouter.NewRouteInput(1, dinInputPort)
-
-	// Create a simple route that takes both inputs (no outputs for now)
-	route := midirouter.NewRoute([]*midirouter.RouteInput{usbInput, dinInput}, []*midirouter.RouteOutput{})
+	// Create route inputs and outputs from config
+	var routes []*midirouter.Route
+	for _, r := range cfg.Routes {
+		var inputs []*midirouter.RouteInput
+		for _, in := range r.Inputs {
+			if pc, ok := portMap[in.PortID]; ok {
+				ch := in.Channel
+				if ch == 0 {
+					ch = 1 // default to channel 1 if not set
+				}
+				inputs = append(inputs, midirouter.NewRouteInput(uint8(ch), pc))
+			}
+		}
+		var outputs []*midirouter.RouteOutput
+		for _, out := range r.Outputs {
+			if pc, ok := portMap[out.PortID]; ok {
+				ch := out.Channel
+				if ch == 0 {
+					ch = 1 // default to channel 1 if not set
+				}
+				outputs = append(outputs, midirouter.NewRouteOutput(uint8(ch), pc))
+			}
+		}
+		route := midirouter.NewRoute(inputs, outputs)
+		routes = append(routes, route)
+	}
 
 	// Create and start the router
-	router := midirouter.NewRouter([]*midirouter.Route{route})
+	router := midirouter.NewRouter(routes)
 
-	err := router.Start()
+	err = router.Start()
 	if err != nil {
 		log.Fatalf("Failed to start router: %v", err)
 	}
