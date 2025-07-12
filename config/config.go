@@ -20,12 +20,14 @@ type MidiPunkConfig struct {
 // PortConfigYAML describes a single MIDI port's configuration.
 // ID: Unique identifier for the port (used in routing).
 // Type: Port type (e.g., "usb", "din").
-// Device: Optional device path or name (for USB ports).
+// Serial: Serial number for USB devices, used to uniquely identify devices of the same make.
+// Device: Optional device path (for DIN) or name (for USB).
 // Direction: "input" or "output"; determines if port receives or sends MIDI.
 // Label: Optional custom label for the port, defaults to device name if available.
 type PortConfigYAML struct {
 	ID        string `yaml:"id"`
 	Type      string `yaml:"type"`
+	Serial    string `yaml:"serial,omitempty"`
 	Device    string `yaml:"device,omitempty"`
 	Direction string `yaml:"direction"`
 	Label     string `yaml:"label,omitempty"`

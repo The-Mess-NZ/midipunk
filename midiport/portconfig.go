@@ -18,22 +18,22 @@ A MIDI port, is a physical device port, either input or output. So, a
 USB MIDI device, might have both an input and an output port configured.
 */
 type PortConfig struct {
-	portType  PortType
-	id        string
-	path      string
-	direction PortDirection
-	Name      string // legacy name field
-	Label     string // Label field for UI, set from config
+	portType  PortType      // Type of the MIDI port (USB or DIN)
+	id        string        // Unique identifier for the port (USB client number or DIN name)
+	path      string        // Device path for DIN ports (e.g., serial port path); unused for USB
+	direction PortDirection // Specifies if the port is an input or output
+	Serial    string        // Serial number for USB devices, used to uniquely identify devices of the same make
+	Label     string        // Label for UI display, set from configuration
 }
 
 // NewUSBPortConfig creates a new PortConfig for a USB MIDI device
-func NewUSBPortConfig(id string, direction PortDirection, label string) *PortConfig {
+func NewUSBPortConfig(id string, serial string, direction PortDirection, label string) *PortConfig {
 	return &PortConfig{
 		portType:  USB,
 		id:        id,
 		path:      "", // USB ports don't use path
 		direction: direction,
-		Name:      id, // legacy
+		Serial:    serial, // set serial number for USB
 		Label:     label,
 	}
 }
@@ -45,7 +45,7 @@ func NewDINPortConfig(id string, path string, direction PortDirection, label str
 		id:        id,
 		path:      path,
 		direction: direction,
-		Name:      id, // legacy
+		Serial:    "", // DIN ports do not have serial numbers
 		Label:     label,
 	}
 }
@@ -112,8 +112,11 @@ func (pc *PortConfig) GetPortFullName() string {
 				}
 			}
 		}
+		if pc.Serial != "" {
+			return pc.Serial
+		}
 	}
-	return pc.Name
+	return pc.Label
 }
 
 // StartListening starts listening for MIDI messages on this port

@@ -10,7 +10,7 @@ import (
 /*
 Detects changes to connected USB MIDI devices and returns
 channels that will each report either connect or disconnect
-events, with pertinent device data, such as name, and port number.
+events, with pertinent device data, such as serial, and port number.
 */
 // USBDeviceEvent represents a USB MIDI device connection event
 // For now, just log details
