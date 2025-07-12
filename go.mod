@@ -10,5 +10,6 @@ require (
 
 require (
 	github.com/creack/goselect v0.1.3 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
 	golang.org/x/sys v0.32.0 // indirect
 )

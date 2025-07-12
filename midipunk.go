@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/The-Mess-NZ/midipunk/api"
 	"github.com/The-Mess-NZ/midipunk/config"
 	"github.com/The-Mess-NZ/midipunk/midiport"
 	"github.com/The-Mess-NZ/midipunk/midirouter"
@@ -83,6 +84,8 @@ func main() {
 			fmt.Println("Available MIDI ports:", midi.GetInPorts())
 		}
 	}()
+
+	go api.StartAPIServer()
 
 	// Keep main thread running
 	select {}
