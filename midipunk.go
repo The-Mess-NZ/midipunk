@@ -16,6 +16,12 @@ import (
 func main() {
 	defer midi.CloseDriver()
 
+	// Print out ins
+	fmt.Println("Available MIDI input ports:")
+	for _, in := range midi.GetInPorts() {
+		fmt.Printf("- %s\n", in)
+	}
+
 	// Load configuration from YAML
 	cfg, err := config.LoadConfig("config.yaml")
 	if err != nil {
@@ -30,9 +36,10 @@ func main() {
 		if label == "" && p.Device != "" {
 			label = p.Device
 		}
-		if p.Type == "USB" {
-			pc = midiport.NewUSBPortConfig(p.ID, midiport.PortDirectionFromString(p.Direction), label)
-		} else if p.Type == "DIN" {
+		switch p.Type {
+		case "USB":
+			pc = midiport.NewUSBPortConfig(p.ID, "", midiport.PortDirectionFromString(p.Direction), label)
+		case "DIN":
 			pc = midiport.NewDINPortConfig(p.ID, p.Device, midiport.PortDirectionFromString(p.Direction), label)
 		}
 		portMap[p.ID] = pc
