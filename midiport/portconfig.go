@@ -182,7 +182,10 @@ func (pc *PortConfig) startDINListening(msgChannel chan<- midi.Message) (func(),
 			}
 
 			if n > 0 {
-				msg := midi.Message(buf[:n])
+				// Create a copy of the buffer to avoid reuse issues
+				msgBytes := make([]byte, n)
+				copy(msgBytes, buf[:n])
+				msg := midi.Message(msgBytes)
 				fmt.Printf("DIN MIDI Message from %s: %s\n", pc.String(), msg)
 				msgChannel <- msg
 			}
