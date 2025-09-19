@@ -14,6 +14,10 @@ ports:
     type: "USB"
     direction: "OUTPUT"
     label: "JT-4000 Output"
+  - id: "3"
+    type: "USB"
+    direction: "OUTPUT"
+    label: "ARGON8M Output"
   - id: "din1"
     type: "DIN"
     device: "/dev/ttyAMA2"
@@ -28,4 +32,6 @@ routes:
       - port_id: "din1"
     outputs:
       - port_id: "2"
+        channel: 2
+      - port_id: "3"
         channel: 2
