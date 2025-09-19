@@ -1,3 +1,4 @@
+logLevel: "none" # none, error, warn, info, debug, all
 # MidiPunk routing configuration file
 ## Ports define the available MIDI input and output devices.
 ## Each port must have a unique `id`.

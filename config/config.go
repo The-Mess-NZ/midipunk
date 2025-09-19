@@ -9,6 +9,8 @@ import (
 // MidiPunkConfig represents the main configuration for the MIDI router.
 // It is loaded from a YAML file and contains port and routing definitions.
 type MidiPunkConfig struct {
+	// LogLevel controls the verbosity of logging output
+	LogLevel string `yaml:"logLevel"`
 	// Label is a required field to identify the configuration in the UI.
 	Label string `yaml:"label"`
 	// Ports defines all available MIDI ports (USB or DIN) and their properties.

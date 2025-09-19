@@ -2,8 +2,8 @@ package midirouter
 
 import (
 	"fmt"
-	"log"
 
+	"github.com/The-Mess-NZ/midipunk/logger"
 	"github.com/The-Mess-NZ/midipunk/midiport"
 	midi "gitlab.com/gomidi/midi/v2"
 	"gitlab.com/gomidi/midi/v2/drivers"
@@ -72,7 +72,7 @@ func (router *Router) Start() error {
 	// Start the message handling goroutine
 	go router.handleMessages()
 
-	fmt.Printf("Router started with %d routes\n", len(router.routes))
+	logger.Info("Router started with %d routes", len(router.routes))
 	return nil
 }
 
@@ -86,7 +86,7 @@ func (router *Router) Stop() {
 	// Clear the senders cache
 	router.senders = make(map[string]func(msg midi.Message) error)
 
-	fmt.Println("Router stopped")
+	logger.Info("Router stopped")
 }
 
 // Returns a cached sender function for the given port, creating it if needed
@@ -179,7 +179,13 @@ func (router *Router) applyChannelChange(msg midi.Message, targetChannel uint8) 
 // handleMessages processes incoming MIDI messages and routes them appropriately
 func (router *Router) handleMessages() {
 	for msg := range router.msgChannel {
-		fmt.Printf("Router received message from %s: %s\n", msg.SourcePort.GetID(), msg.Message)
+		// Check if this is a timing message
+		isTiming := len(msg.Message) == 1 && (msg.Message[0] == 0xF8 || msg.Message[0] == 0xFA || msg.Message[0] == 0xFB || msg.Message[0] == 0xFC || msg.Message[0] == 0xFE || msg.Message[0] == 0xFF)
+		if isTiming {
+			logger.DebugMIDITiming("Router received message from %s: %s", msg.SourcePort.GetID(), msg.Message)
+		} else {
+			logger.DebugMIDI("Router received message from %s: %s", msg.SourcePort.GetID(), msg.Message)
+		}
 
 		// Find all routes that should handle this message
 		for _, route := range router.routes {
@@ -198,7 +204,7 @@ func (router *Router) handleMessages() {
 					// Get sender for the output port
 					sender, err := router.getSender(routeOutput.GetPortConfig())
 					if err != nil {
-						log.Printf("Error getting sender for port %s: %v", routeOutput.GetPortConfig().GetID(), err)
+						logger.Error("Error getting sender for port %s: %v", routeOutput.GetPortConfig().GetID(), err)
 						continue
 					}
 
@@ -208,9 +214,9 @@ func (router *Router) handleMessages() {
 					// Send the message
 					err = sender(outputMsg)
 					if err != nil {
-						log.Printf("Error sending message to port %s: %v", routeOutput.GetPortConfig().GetID(), err)
+						logger.Error("Error sending message to port %s: %v", routeOutput.GetPortConfig().GetID(), err)
 					} else {
-						fmt.Printf("Routed message from %s to %s (channel %d)\n",
+						logger.DebugMIDI("Routed message from %s to %s (channel %d)",
 							msg.SourcePort.GetID(), routeOutput.GetPortConfig().GetID(), routeOutput.GetChannel())
 					}
 				}

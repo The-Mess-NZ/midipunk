@@ -1,12 +1,12 @@
 package midiport
 
 import (
-	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/The-Mess-NZ/midipunk/logger"
 )
 
 /*
@@ -23,7 +23,7 @@ func UsbDeviceDetect(pollIntervalSeconds int, eventChan chan<- struct{}) {
 
 		files, err := os.ReadDir(watchPath)
 		if err != nil {
-			log.Printf("Error reading %s: %v", watchPath, err)
+			logger.Error("Error reading %s: %v", watchPath, err)
 			time.Sleep(time.Duration(pollIntervalSeconds) * time.Second)
 			continue
 		}
@@ -56,7 +56,7 @@ func UsbDeviceDetect(pollIntervalSeconds int, eventChan chan<- struct{}) {
 					BusNum:        busNum,
 					DevNum:        devNum,
 				}
-				fmt.Printf("%+v\n", dev)
+				logger.Debug("USB MIDI device detected: %+v", dev)
 				USBMIDIDeviceRepo[devPath] = dev
 				changed = true
 			}
@@ -64,7 +64,7 @@ func UsbDeviceDetect(pollIntervalSeconds int, eventChan chan<- struct{}) {
 		// Detect removed devices
 		for devPath := range prevDevices {
 			if _, found := currentDevices[devPath]; !found {
-				log.Printf("USB MIDI device disconnected: %s", devPath)
+				logger.Info("USB MIDI device disconnected: %s", devPath)
 				delete(USBMIDIDeviceRepo, devPath)
 				changed = true
 			}
@@ -134,7 +134,7 @@ func getSysfsInfo(devPath string) (idVendor, idProduct, iSerial, iManufacturer, 
 	// Run aconnect -l to find the client number from the card number
 	aconnectOut, err := exec.Command("aconnect", "-l").Output()
 	if err != nil {
-		log.Printf("Error running aconnect -l: %v", err)
+		logger.Error("Error running aconnect -l: %v", err)
 		return
 	}
 	lines := strings.SplitSeq(string(aconnectOut), "\n")
@@ -181,7 +181,7 @@ func getSysfsInfo(devPath string) (idVendor, idProduct, iSerial, iManufacturer, 
 	// Absolute
 	usbDevicePath = strings.Replace(usbDevicePath, "../..", "/sys", 1)
 
-	log.Printf("USB device path: %s", usbDevicePath)
+	logger.Debug("USB device path: %s", usbDevicePath)
 
 	idVendor = readSysfsFile(usbDevicePath + "/idVendor")
 	idProduct = readSysfsFile(usbDevicePath + "/idProduct")

@@ -1,11 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"flag"
 	"log"
 
 	"github.com/The-Mess-NZ/midipunk/api"
 	"github.com/The-Mess-NZ/midipunk/config"
+	"github.com/The-Mess-NZ/midipunk/logger"
 	"github.com/The-Mess-NZ/midipunk/midiport"
 	"github.com/The-Mess-NZ/midipunk/midirouter"
 
@@ -16,16 +17,35 @@ import (
 func main() {
 	defer midi.CloseDriver()
 
-	// Print out ins
-	fmt.Println("Available MIDI input ports:")
-	for _, in := range midi.GetInPorts() {
-		fmt.Printf("- %s\n", in)
-	}
+	// Parse command-line arguments
+	var logLevel = flag.String("log-level", "", "Set log level (none, error, info, debug, all) - overrides config file")
+	flag.Parse()
 
 	// Load configuration from YAML
 	cfg, err := config.LoadConfig("config.yaml")
 	if err != nil {
+		logger.Error("Failed to load config: %v", err)
 		log.Fatalf("Failed to load config: %v", err)
+	}
+
+	// Determine log level (command line overrides config)
+	var finalLogLevel string
+	if *logLevel != "" {
+		finalLogLevel = *logLevel
+	} else {
+		finalLogLevel = cfg.LogLevel
+	}
+
+	// Initialize logger
+	logger.Init(logger.LogLevelFromString(finalLogLevel))
+	defer logger.Shutdown()
+
+	logger.Info("MidiPunk starting with log level: %s", finalLogLevel)
+
+	// Print out ins
+	logger.Info("Available MIDI input ports:")
+	for _, in := range midi.GetInPorts() {
+		logger.Info("- %s", in)
 	}
 
 	// Create port configurations from config
@@ -77,6 +97,7 @@ func main() {
 
 	err = router.Start()
 	if err != nil {
+		logger.Error("Failed to start router: %v", err)
 		log.Fatalf("Failed to start router: %v", err)
 	}
 
@@ -86,13 +107,13 @@ func main() {
 	deviceEventChan := make(chan struct{})
 	go midiport.UsbDeviceDetect(2, deviceEventChan)
 
-	fmt.Println("MidiPunk router started. Press Ctrl+C to exit...")
+	logger.Info("MidiPunk router started. Press Ctrl+C to exit...")
 
 	// Listen for device events and print updated MIDI ports
 	go func() {
 		for range deviceEventChan {
-			fmt.Println("MIDI device change detected!")
-			fmt.Println("Available MIDI ports:", midi.GetInPorts())
+			logger.Info("MIDI device change detected!")
+			logger.Info("Available MIDI ports: %v", midi.GetInPorts())
 		}
 	}()
 

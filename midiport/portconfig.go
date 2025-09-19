@@ -2,10 +2,10 @@ package midiport
 
 import (
 	"fmt"
-	"log"
 	"os/exec"
 	"strings"
 
+	"github.com/The-Mess-NZ/midipunk/logger"
 	midi "gitlab.com/gomidi/midi/v2"
 	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv"
 	"go.bug.st/serial"
@@ -147,7 +147,13 @@ func (pc *PortConfig) startUSBListening(msgChannel chan<- midi.Message) (func(),
 	}
 
 	stop, err := midi.ListenTo(in, func(msg midi.Message, timestamp int32) {
-		fmt.Printf("USB MIDI Message from %s: %s\n", pc.String(), msg)
+		// Check if this is a timing message (Clock, Start, Stop, Continue, Active Sensing, Reset)
+		isTiming := len(msg) == 1 && (msg[0] == 0xF8 || msg[0] == 0xFA || msg[0] == 0xFB || msg[0] == 0xFC || msg[0] == 0xFE || msg[0] == 0xFF)
+		if isTiming {
+			logger.DebugMIDITiming("USB MIDI Message from %s: %s", pc.String(), msg)
+		} else {
+			logger.DebugMIDI("USB MIDI Message from %s: %s", pc.String(), msg)
+		}
 		msgChannel <- msg
 	})
 
@@ -177,7 +183,7 @@ func (pc *PortConfig) startDINListening(msgChannel chan<- midi.Message) (func(),
 		for {
 			n, err := port.Read(buf)
 			if err != nil {
-				log.Printf("Error reading from serial port %s: %v", pc.path, err)
+				logger.Error("Error reading from serial port %s: %v", pc.path, err)
 				return
 			}
 
@@ -186,7 +192,13 @@ func (pc *PortConfig) startDINListening(msgChannel chan<- midi.Message) (func(),
 				msgBytes := make([]byte, n)
 				copy(msgBytes, buf[:n])
 				msg := midi.Message(msgBytes)
-				fmt.Printf("DIN MIDI Message from %s: %s\n", pc.String(), msg)
+				// Check if this is a timing message
+				isTiming := len(msg) == 1 && (msg[0] == 0xF8 || msg[0] == 0xFA || msg[0] == 0xFB || msg[0] == 0xFC || msg[0] == 0xFE || msg[0] == 0xFF)
+				if isTiming {
+					logger.DebugMIDITiming("DIN MIDI Message from %s: %s", pc.String(), msg)
+				} else {
+					logger.DebugMIDI("DIN MIDI Message from %s: %s", pc.String(), msg)
+				}
 				msgChannel <- msg
 			}
 		}

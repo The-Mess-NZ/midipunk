@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/The-Mess-NZ/midipunk/api/handlers"
+	"github.com/The-Mess-NZ/midipunk/logger"
 )
 
 func StartAPIServer() {
@@ -13,8 +14,9 @@ func StartAPIServer() {
 	http.HandleFunc("/status/ws", handlers.StatusWSHandler)
 	http.HandleFunc("/events/ws", handlers.EventWSHandler)
 
-	log.Println("API server starting on :8080...")
+	logger.Info("API server starting on :8080...")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
+		logger.Error("API server failed: %v", err)
 		log.Fatalf("API server failed: %v", err)
 	}
 }
