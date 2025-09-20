@@ -5,15 +5,40 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/The-Mess-NZ/midipunk/logger"
 	"gopkg.in/yaml.v3"
 )
 
 const configPath = "config.yaml"
 
+// A defined MIDI port in the configuration. Must be defined here to be used in routes.
+type Port struct {
+	Id        string `yaml:"id"`
+	Type      string `yaml:"type"`
+	Direction string `yaml:"direction"`
+	Label     string `yaml:"label,omitempty"`
+}
+
+// A defined MIDI route in the configuration.
+type Route struct {
+	Label   string    `yaml:"label,omitempty"`
+	Enabled bool      `yaml:"enabled"`
+	Inputs  []RouteIO `yaml:"inputs"`
+	Outputs []RouteIO `yaml:"outputs"`
+}
+
+// RouteIO represents a MIDI port and optional channel for a route input or output.
+type RouteIO struct {
+	PortID  string `yaml:"portId"`
+	Channel int    `yaml:"channel,omitempty"`
+}
+
+// Config represents the root configuration file structure.
 type Config struct {
-	Label  string                   `yaml:"label"`
-	Ports  []map[string]interface{} `yaml:"ports"`
-	Routes []map[string]interface{} `yaml:"routes"`
+	Label    string          `yaml:"label"`
+	LogLevel logger.LogLevel `yaml:"logLevel"`
+	Ports    []Port          `yaml:"ports"`
+	Routes   []Route         `yaml:"routes"`
 }
 
 func readConfig() (*Config, error) {

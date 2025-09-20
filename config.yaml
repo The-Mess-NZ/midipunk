@@ -1,11 +1,18 @@
-logLevel: "none" # none, error, warn, info, debug, all
 # MidiPunk routing configuration file
-## Ports define the available MIDI input and output devices.
+## Multiple configurations can be created and loaded via the API or web interface.
+label: "Example Configuration"
+## Set the logging level for the route. This controls the verbosity of log messages.
+## Options are: "NONE", "ERROR", "INFO", "DEBUG", "ALL"
+## Any log level above "INFO" may producte a large volume of log messages,
+## and may impact overall performance and timing of MIDI messages.
+logLevel: "NONE" # none, error, warn, info, debug, all
+## Ports define the available MIDI input and output devices for use in routes.
 ## Each port must have a unique `id`.
 ## `type` can be "USB" or "DIN".
 ## `direction` can be "INPUT" or "OUTPUT".
 ## `label` is a human-readable name for the port.
 ## For DIN ports, `device` specifies the system device path.
+## A port must be defined here before it can be used in a route.
 ports:
   - id: "1"
     type: "USB"
@@ -31,10 +38,10 @@ routes:
   - label: "88 Keys to JT-4000"
     enabled: true
     inputs:
-      - port_id: "1"
-      - port_id: "din1"
+      - portId: "1"
+      - portId: "din1"
     outputs:
-      - port_id: "2"
+      - portId: "2"
         channel: 2
-      - port_id: "3"
+      - portId: "3"
         channel: 2

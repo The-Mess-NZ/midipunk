@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 /*
@@ -60,6 +62,16 @@ func LogLevelFromString(s string) LogLevel {
 	default:
 		return NONE
 	}
+}
+
+// UnmarshalYAML implements the yaml.Unmarshaler interface for LogLevel
+func (l *LogLevel) UnmarshalYAML(value *yaml.Node) error {
+	var s string
+	if err := value.Decode(&s); err != nil {
+		return err
+	}
+	*l = LogLevelFromString(s)
+	return nil
 }
 
 // LogMessage represents a log message

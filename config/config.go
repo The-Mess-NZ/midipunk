@@ -40,7 +40,7 @@ type PortConfigYAML struct {
 // Channel: MIDI channel number (1-16) to listen to.
 // Label: Optional label for UI display.
 type RouteInputYAML struct {
-	PortID  string `yaml:"port_id"`
+	PortID  string `yaml:"portId"`
 	Channel int    `yaml:"channel"`
 	Label   string `yaml:"label,omitempty"`
 }
@@ -50,7 +50,7 @@ type RouteInputYAML struct {
 // Channel: MIDI channel number (1-16) to send to.
 // Label: Optional label for UI display.
 type RouteOutputYAML struct {
-	PortID  string `yaml:"port_id"`
+	PortID  string `yaml:"portId"`
 	Channel int    `yaml:"channel"`
 	Label   string `yaml:"label,omitempty"`
 }

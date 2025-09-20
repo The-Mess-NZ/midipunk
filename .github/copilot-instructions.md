@@ -33,6 +33,7 @@ It runs on a Raspberry Pi 4B.
 
 ### YAML Structure
 ```yaml
+label: "My MIDI Router Example"
 logLevel: "none"  # none, error, info, debug, all (timing messages only at "all")
 ports:
   - id: "1"              # USB: ALSA client number as string
@@ -46,12 +47,12 @@ ports:
     label: "SQ-64 In"
 routes:
   - inputs:
-      - port_id: "1"
-      - port_id: "din1"
+      - portId: "1"
+      - portId: "din1"
     outputs:
-      - port_id: "2"
+      - portId: "2"
         channel: 2         # Optional channel mapping (1-16)
-      - port_id: "3" 
+      - portId: "3" 
         channel: 2
 ```
 
