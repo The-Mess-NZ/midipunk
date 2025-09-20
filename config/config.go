@@ -8,24 +8,26 @@ import (
 
 // MidiPunkConfig represents the main configuration for the MIDI router.
 // It is loaded from a YAML file and contains port and routing definitions.
+//   - LogLevel: Controls the verbosity of logging output. Default is "NONE".
+//   - Label: Required field to identify the configuration in the UI.
+//   - ProgramNumber: Optional field to assign a program change number to the configuration.
+//   - Ports: Defines all available MIDI ports (USB or DIN) and their properties.
+//   - Routes: Defines how MIDI messages are routed between ports and channels.
 type MidiPunkConfig struct {
-	// LogLevel controls the verbosity of logging output
-	LogLevel string `yaml:"logLevel"`
-	// Label is a required field to identify the configuration in the UI.
-	Label string `yaml:"label"`
-	// Ports defines all available MIDI ports (USB or DIN) and their properties.
-	Ports []PortConfigYAML `yaml:"ports"`
-	// Routes defines how MIDI messages are routed between ports and channels.
-	Routes []RouteYAML `yaml:"routes"`
+	LogLevel      string           `yaml:"logLevel"`
+	Label         string           `yaml:"label"`
+	ProgramNumber int              `yaml:"programNumber,omitempty"`
+	Ports         []PortConfigYAML `yaml:"ports"`
+	Routes        []RouteYAML      `yaml:"routes"`
 }
 
 // PortConfigYAML describes a single MIDI port's configuration.
-// ID: Unique identifier for the port (used in routing).
-// Type: Port type (e.g., "usb", "din").
-// Serial: Serial number for USB devices, used to uniquely identify devices of the same make.
-// Device: Optional device path (for DIN) or name (for USB).
-// Direction: "input" or "output"; determines if port receives or sends MIDI.
-// Label: Optional custom label for the port, defaults to device name if available.
+//   - ID: Unique identifier for the port (used in routing).
+//   - Type: Port type (e.g., "usb", "din").
+//   - Serial: Serial number for USB devices, used to uniquely identify devices of the same make.
+//   - Device: Optional device path (for DIN) or name (for USB).
+//   - Direction: "input" or "output"; determines if port receives or sends MIDI.
+//   - Label: Optional custom label for the port, defaults to device name if available.
 type PortConfigYAML struct {
 	ID        string `yaml:"id"`
 	Type      string `yaml:"type"`
@@ -46,9 +48,9 @@ type RouteInputYAML struct {
 }
 
 // RouteOutputYAML specifies a destination port and MIDI channel for routing.
-// PortID: The ID of the output port.
-// Channel: MIDI channel number (1-16) to send to.
-// Label: Optional label for UI display.
+//   - PortID: The ID of the output port.
+//   - Channel: MIDI channel number (1-16) to send to.
+//   - Label: Optional label for UI display.
 type RouteOutputYAML struct {
 	PortID  string `yaml:"portId"`
 	Channel int    `yaml:"channel"`
@@ -56,9 +58,9 @@ type RouteOutputYAML struct {
 }
 
 // RouteYAML defines a routing rule from one or more inputs to one or more outputs.
-// Inputs: List of input ports/channels.
-// Outputs: List of output ports/channels.
-// Label: Optional label to describe the route's purpose.
+//   - Inputs: List of input ports/channels.
+//   - Outputs: List of output ports/channels.
+//   - Label: Optional label to describe the route's purpose.
 type RouteYAML struct {
 	Inputs  []RouteInputYAML  `yaml:"inputs"`
 	Outputs []RouteOutputYAML `yaml:"outputs"`

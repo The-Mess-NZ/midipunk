@@ -98,15 +98,16 @@ func (pc *PortConfig) GetPortFullName() string {
 			lines := strings.Split(string(aconnectOut), "\n")
 			clientNum := pc.id
 			for _, line := range lines {
-				if strings.Contains(line, "client "+clientNum+":") {
-					// Next lines are ports for this client
-					for i := 1; i <= 4; i++ {
-						if len(lines) > i {
-							portLine := lines[i]
-							if strings.Contains(portLine, "'") {
-								name := strings.TrimSpace(strings.Split(portLine, "'")[1])
-								return name
-							}
+				if !strings.Contains(line, "client "+clientNum+":") {
+					continue
+				}
+				// Next lines are ports for this client
+				for i := 1; i <= 4; i++ {
+					if len(lines) > i {
+						portLine := lines[i]
+						if strings.Contains(portLine, "'") {
+							name := strings.TrimSpace(strings.Split(portLine, "'")[1])
+							return name
 						}
 					}
 				}

@@ -1,11 +1,17 @@
 # MidiPunk routing configuration file
 ## Multiple configurations can be created and loaded via the API or web interface.
-label: "Example Configuration"
+
+## The label is a human-readable name for the configuration.
+label: "Example Route"
 ## Set the logging level for the route. This controls the verbosity of log messages.
 ## Options are: "NONE", "ERROR", "INFO", "DEBUG", "ALL"
 ## Any log level above "INFO" may producte a large volume of log messages,
 ## and may impact overall performance and timing of MIDI messages.
 logLevel: "NONE" # none, error, warn, info, debug, all
+## Set the MIDI program number (1-128) to send to connected devices on load,
+## or which program change message should load this configuration.
+## Leave blank to disable program change handling (manual mode).
+programNumber: 1
 ## Ports define the available MIDI input and output devices for use in routes.
 ## Each port must have a unique `id`.
 ## `type` can be "USB" or "DIN".

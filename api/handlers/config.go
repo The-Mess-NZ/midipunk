@@ -5,55 +5,25 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/The-Mess-NZ/midipunk/logger"
+	"github.com/The-Mess-NZ/midipunk/config"
 	"gopkg.in/yaml.v3"
 )
 
 const configPath = "config.yaml"
 
-// A defined MIDI port in the configuration. Must be defined here to be used in routes.
-type Port struct {
-	Id        string `yaml:"id"`
-	Type      string `yaml:"type"`
-	Direction string `yaml:"direction"`
-	Label     string `yaml:"label,omitempty"`
-}
-
-// A defined MIDI route in the configuration.
-type Route struct {
-	Label   string    `yaml:"label,omitempty"`
-	Enabled bool      `yaml:"enabled"`
-	Inputs  []RouteIO `yaml:"inputs"`
-	Outputs []RouteIO `yaml:"outputs"`
-}
-
-// RouteIO represents a MIDI port and optional channel for a route input or output.
-type RouteIO struct {
-	PortID  string `yaml:"portId"`
-	Channel int    `yaml:"channel,omitempty"`
-}
-
-// Config represents the root configuration file structure.
-type Config struct {
-	Label    string          `yaml:"label"`
-	LogLevel logger.LogLevel `yaml:"logLevel"`
-	Ports    []Port          `yaml:"ports"`
-	Routes   []Route         `yaml:"routes"`
-}
-
-func readConfig() (*Config, error) {
+func readConfig() (*config.MidiPunkConfig, error) {
 	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return nil, err
 	}
-	var cfg Config
+	var cfg config.MidiPunkConfig
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, err
 	}
 	return &cfg, nil
 }
 
-func writeConfig(cfg *Config) error {
+func writeConfig(cfg *config.MidiPunkConfig) error {
 	data, err := yaml.Marshal(cfg)
 	if err != nil {
 		return err
@@ -74,7 +44,7 @@ func ConfigGetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ConfigPutHandler(w http.ResponseWriter, r *http.Request) {
-	var cfg Config
+	var cfg config.MidiPunkConfig
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)

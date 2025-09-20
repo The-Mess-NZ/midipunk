@@ -42,10 +42,17 @@ func main() {
 
 	logger.Info("MidiPunk starting with log level: %s", finalLogLevel)
 
-	// Print out ins
-	logger.Info("Available MIDI input ports:")
-	for _, in := range midi.GetInPorts() {
-		logger.Info("- %s", in)
+	// Print out ports
+	if logger.GetLevel() >= logger.INFO {
+		logger.Info("Available MIDI input ports:")
+		for _, in := range midi.GetInPorts() {
+			logger.Info("- %s", in)
+		}
+
+		logger.Info("Available MIDI output ports:")
+		for _, out := range midi.GetOutPorts() {
+			logger.Info("- %s", out)
+		}
 	}
 
 	// Create port configurations from config
@@ -70,23 +77,27 @@ func main() {
 	for _, r := range cfg.Routes {
 		var inputs []*midirouter.RouteInput
 		for _, in := range r.Inputs {
-			if pc, ok := portMap[in.PortID]; ok {
-				ch := in.Channel
-				if ch == 0 {
-					ch = 1 // default to channel 1 if not set
-				}
-				inputs = append(inputs, midirouter.NewRouteInput(uint8(ch), pc, in.Label))
+			pc, ok := portMap[in.PortID]
+			if !ok {
+				continue
 			}
+			ch := in.Channel
+			if ch == 0 {
+				ch = 1
+			}
+			inputs = append(inputs, midirouter.NewRouteInput(uint8(ch), pc, in.Label))
 		}
 		var outputs []*midirouter.RouteOutput
 		for _, out := range r.Outputs {
-			if pc, ok := portMap[out.PortID]; ok {
-				ch := out.Channel
-				if ch == 0 {
-					ch = 1 // default to channel 1 if not set
-				}
-				outputs = append(outputs, midirouter.NewRouteOutput(uint8(ch), pc, out.Label))
+			pc, ok := portMap[out.PortID]
+			if !ok {
+				continue
 			}
+			ch := out.Channel
+			if ch == 0 {
+				ch = 1 // default to channel 1 if not set
+			}
+			outputs = append(outputs, midirouter.NewRouteOutput(uint8(ch), pc, out.Label))
 		}
 		route := midirouter.NewRoute(inputs, outputs, r.Label)
 		routes = append(routes, route)
