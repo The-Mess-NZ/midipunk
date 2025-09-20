@@ -171,8 +171,6 @@ logger.DebugMIDITiming("Timing message: %s", msg)  // Only at ALL level
 - Sender functions cached per output port to avoid repeated port opening
 
 ### Current Limitations
-- DIN output not yet fully implemented (serial writing needs completion)
-- Route matching uses first matching input per route only
 - No MIDI message filtering beyond channel mapping
 
 ## Development Workflow
