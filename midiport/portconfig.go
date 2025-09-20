@@ -122,6 +122,7 @@ func (pc *PortConfig) GetPortFullName() string {
 // StartListening starts listening for MIDI messages on this port
 func (pc *PortConfig) StartListening(msgChannel chan<- midi.Message) (func(), error) {
 	if pc.direction != INPUT {
+		logger.Error("Cannot listen on OUTPUT port: %s", pc.String())
 		return nil, fmt.Errorf("cannot listen on OUTPUT port")
 	}
 
@@ -131,6 +132,7 @@ func (pc *PortConfig) StartListening(msgChannel chan<- midi.Message) (func(), er
 	case DIN:
 		return pc.startDINListening(msgChannel)
 	default:
+		logger.Error("Unknown port type for listening: %s", pc.String())
 		return nil, fmt.Errorf("unknown port type")
 	}
 }
@@ -143,6 +145,7 @@ func (pc *PortConfig) startUSBListening(msgChannel chan<- midi.Message) (func(),
 
 	in, err := midi.InPort(portNum)
 	if err != nil {
+		logger.Error("Failed to open USB MIDI input port %s: %v", pc.id, err)
 		return nil, fmt.Errorf("failed to open USB MIDI port %s: %v", pc.id, err)
 	}
 
@@ -158,6 +161,7 @@ func (pc *PortConfig) startUSBListening(msgChannel chan<- midi.Message) (func(),
 	})
 
 	if err != nil {
+		logger.Error("Failed to start listening on USB port %s: %v", pc.id, err)
 		return nil, fmt.Errorf("failed to start listening on USB port %s: %v", pc.id, err)
 	}
 
@@ -172,6 +176,7 @@ func (pc *PortConfig) startDINListening(msgChannel chan<- midi.Message) (func(),
 
 	port, err := serial.Open(pc.path, mode)
 	if err != nil {
+		logger.Error("Failed to open serial port %s for DIN input: %v", pc.path, err)
 		return nil, fmt.Errorf("failed to open serial port %s: %v", pc.path, err)
 	}
 
@@ -208,4 +213,52 @@ func (pc *PortConfig) startDINListening(msgChannel chan<- midi.Message) (func(),
 	return func() {
 		port.Close()
 	}, nil
+}
+
+// CreateDINSender creates a sender function for DIN MIDI output via serial
+func (pc *PortConfig) CreateDINSender() (func(msg midi.Message) error, error) {
+	if pc.portType != DIN {
+		logger.Error("Cannot create DIN sender for non-DIN port: %s", pc.String())
+		return nil, fmt.Errorf("cannot create DIN sender for non-DIN port")
+	}
+	if pc.direction != OUTPUT {
+		logger.Error("Cannot create sender for INPUT port: %s", pc.String())
+		return nil, fmt.Errorf("cannot create sender for INPUT port")
+	}
+
+	mode := &serial.Mode{
+		BaudRate: 38400,
+	}
+
+	port, err := serial.Open(pc.path, mode)
+	if err != nil {
+		logger.Error("Failed to open serial port %s for DIN output: %v", pc.path, err)
+		return nil, fmt.Errorf("failed to open serial port %s for output: %v", pc.path, err)
+	}
+
+	// Create the sender function
+	sender := func(msg midi.Message) error {
+		if len(msg) == 0 {
+			return nil // Nothing to send
+		}
+
+		// Write MIDI message bytes to serial port
+		n, err := port.Write([]byte(msg))
+		if err != nil {
+			logger.Error("Failed to write to serial port %s: %v", pc.path, err)
+			return err
+		}
+
+		// Check if this is a timing message for appropriate logging
+		isTiming := len(msg) == 1 && (msg[0] == 0xF8 || msg[0] == 0xFA || msg[0] == 0xFB || msg[0] == 0xFC || msg[0] == 0xFE || msg[0] == 0xFF)
+		if isTiming {
+			logger.DebugMIDITiming("DIN MIDI Message sent to %s (%d bytes): %s", pc.String(), n, msg)
+		} else {
+			logger.DebugMIDI("DIN MIDI Message sent to %s (%d bytes): %s", pc.String(), n, msg)
+		}
+
+		return nil
+	}
+
+	return sender, nil
 }

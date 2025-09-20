@@ -6,7 +6,6 @@ import (
 	"github.com/The-Mess-NZ/midipunk/logger"
 	"github.com/The-Mess-NZ/midipunk/midiport"
 	midi "gitlab.com/gomidi/midi/v2"
-	"gitlab.com/gomidi/midi/v2/drivers"
 )
 
 /*
@@ -99,7 +98,7 @@ func (router *Router) getSender(portConfig *midiport.PortConfig) (func(msg midi.
 	}
 
 	// Create a new sender based on port type
-	var out drivers.Out
+	var sender func(msg midi.Message) error
 	var err error
 
 	switch portConfig.GetPortType() {
@@ -107,22 +106,26 @@ func (router *Router) getSender(portConfig *midiport.PortConfig) (func(msg midi.
 		// Get the USB MIDI port by ID (converting string to int)
 		var portNum int
 		fmt.Sscanf(portID, "%d", &portNum)
-		out, err = midi.OutPort(portNum)
+		out, err := midi.OutPort(portNum)
 		if err != nil {
 			return nil, fmt.Errorf("failed to open USB MIDI out port %s: %v", portID, err)
 		}
+
+		// Create sender function using midi.SendTo
+		sender, err = midi.SendTo(out)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create USB sender for port %s: %v", portID, err)
+		}
+
 	case midiport.DIN:
-		// For DIN ports, we'll need to implement serial output
-		// For now, return an error as DIN output is not fully implemented
-		return nil, fmt.Errorf("DIN output not yet implemented for port %s", portID)
+		// Create DIN sender using the port config's CreateDINSender method
+		sender, err = portConfig.CreateDINSender()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create DIN sender for port %s: %v", portID, err)
+		}
+
 	default:
 		return nil, fmt.Errorf("unknown port type for port %s", portID)
-	}
-
-	// Create sender function using midi.SendTo
-	sender, err := midi.SendTo(out)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create sender for port %s: %v", portID, err)
 	}
 
 	// Cache the sender
@@ -216,8 +219,13 @@ func (router *Router) handleMessages() {
 					if err != nil {
 						logger.Error("Error sending message to port %s: %v", routeOutput.GetPortConfig().GetID(), err)
 					} else {
-						logger.DebugMIDI("Routed message from %s to %s (channel %d)",
-							msg.SourcePort.GetID(), routeOutput.GetPortConfig().GetID(), routeOutput.GetChannel())
+						if isTiming {
+							logger.DebugMIDITiming("Routed message from %s to %s (channel %d)",
+								msg.SourcePort.GetID(), routeOutput.GetPortConfig().GetID(), routeOutput.GetChannel())
+						} else {
+							logger.DebugMIDI("Routed message from %s to %s (channel %d)",
+								msg.SourcePort.GetID(), routeOutput.GetPortConfig().GetID(), routeOutput.GetChannel())
+						}
 					}
 				}
 			}
