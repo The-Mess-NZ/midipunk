@@ -144,15 +144,11 @@ func (router *Router) shouldRouteMessage(msg *MessageWithSource, routeInput *Rou
 	// If the route input specifies a channel (non-zero), check if the message matches
 	if routeInput.GetChannel() != 0 {
 		// Extract channel from MIDI message if it's a channel message
-		if len(msg.Message) > 0 {
-			// Most MIDI channel messages have channel in the lower 4 bits of the first byte
-			msgByte := msg.Message[0]
-			if msgByte >= 0x80 && msgByte <= 0xEF { // Channel messages
-				msgChannel := (msgByte & 0x0F) + 1 // Convert 0-15 to 1-16
-				if msgChannel != routeInput.GetChannel() {
-					return false
-				}
-			}
+		var msgChannel uint8
+		isChanMsg := msg.Message.GetChannel(&msgChannel)
+
+		if !isChanMsg || msgChannel+1 != routeInput.GetChannel() {
+			return false // Not a channel message, cannot match channel
 		}
 	}
 
@@ -171,8 +167,9 @@ func (router *Router) applyChannelChange(msg midi.Message, targetChannel uint8) 
 
 	// Check if this is a channel message
 	msgByte := newMsg[0]
-	if msgByte >= 0x80 && msgByte <= 0xEF { // Channel messages
+	if msg.Is(midi.ChannelMsg) {
 		// Clear the channel bits and set the new channel (convert 1-16 to 0-15)
+		// Upper 4 bits are the message type (e.g. NoteOn), lower 4 bits are the channel
 		newMsg[0] = (msgByte & 0xF0) | ((targetChannel - 1) & 0x0F)
 	}
 
@@ -183,8 +180,7 @@ func (router *Router) applyChannelChange(msg midi.Message, targetChannel uint8) 
 func (router *Router) handleMessages() {
 	for msg := range router.msgChannel {
 		// Check if this is a timing message
-		isTiming := len(msg.Message) == 1 && (msg.Message[0] == 0xF8 || msg.Message[0] == 0xFA || msg.Message[0] == 0xFB || msg.Message[0] == 0xFC || msg.Message[0] == 0xFE || msg.Message[0] == 0xFF)
-		if isTiming {
+		if msg.Message.Is(midi.TimingClockMsg) {
 			logger.DebugMIDITiming("Router received message from %s: %s", msg.SourcePort.GetID(), msg.Message)
 		} else {
 			logger.DebugMIDI("Router received message from %s: %s", msg.SourcePort.GetID(), msg.Message)
@@ -192,41 +188,46 @@ func (router *Router) handleMessages() {
 
 		// Find all routes that should handle this message
 		for _, route := range router.routes {
-			// Check if any input in this route matches the incoming message
+			// Check if ANY input in this route matches the incoming message
 			var matchingInput *RouteInput
 			for _, routeInput := range route.GetInputs() {
 				if router.shouldRouteMessage(msg, routeInput, nil) {
 					matchingInput = routeInput
-					break // Only process the first matching input per route
+					break
 				}
 			}
 
-			// If we found a matching input, route to all outputs of this route
-			if matchingInput != nil {
-				for _, routeOutput := range route.GetOutputs() {
-					// Get sender for the output port
-					sender, err := router.getSender(routeOutput.GetPortConfig())
-					if err != nil {
-						logger.Error("Error getting sender for port %s: %v", routeOutput.GetPortConfig().GetID(), err)
-						continue
-					}
+			// No matching input, try next route
+			if matchingInput == nil {
+				continue
+			}
 
-					// Apply channel change if needed
-					outputMsg := router.applyChannelChange(msg.Message, routeOutput.GetChannel())
+			// Route to all outputs of this route
+			for _, routeOutput := range route.GetOutputs() {
+				// Get sender for the output port
+				sender, err := router.getSender(routeOutput.GetPortConfig())
+				if err != nil {
+					logger.Error("Error getting sender for port %s: %v", routeOutput.GetPortConfig().GetID(), err)
+					continue
+				}
 
-					// Send the message
-					err = sender(outputMsg)
-					if err != nil {
-						logger.Error("Error sending message to port %s: %v", routeOutput.GetPortConfig().GetID(), err)
-					} else {
-						if isTiming {
-							logger.DebugMIDITiming("Routed message from %s to %s (channel %d)",
-								msg.SourcePort.GetID(), routeOutput.GetPortConfig().GetID(), routeOutput.GetChannel())
-						} else {
-							logger.DebugMIDI("Routed message from %s to %s (channel %d)",
-								msg.SourcePort.GetID(), routeOutput.GetPortConfig().GetID(), routeOutput.GetChannel())
-						}
-					}
+				// Apply channel change if needed
+				outputMsg := router.applyChannelChange(msg.Message, routeOutput.GetChannel())
+
+				// Send the message
+				err = sender(outputMsg)
+				if err != nil {
+					logger.Error("Error sending message to port %s: %v", routeOutput.GetPortConfig().GetID(), err)
+					continue
+				}
+
+				// No error, handle logging
+				if msg.Message.Is(midi.TimingClockMsg) {
+					logger.DebugMIDITiming("Routed timing message from %s to %s (channel %d)",
+						msg.SourcePort.GetID(), routeOutput.GetPortConfig().GetID(), routeOutput.GetChannel())
+				} else {
+					logger.DebugMIDI("Routed message from %s to %s (channel %d)",
+						msg.SourcePort.GetID(), routeOutput.GetPortConfig().GetID(), routeOutput.GetChannel())
 				}
 			}
 		}

@@ -28,7 +28,9 @@ ports:
 ## If `channel` is specified, only messages to/from that channel are routed on that port.
 ## If `channel` is omitted, messages are routed to/from all channels on that port.
 routes:
-  - inputs:
+  - label: "88 Keys to JT-4000"
+    enabled: true
+    inputs:
       - port_id: "1"
       - port_id: "din1"
     outputs:

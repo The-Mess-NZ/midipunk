@@ -8,7 +8,14 @@ import (
 	"time"
 )
 
-// LogLevel represents the different logging levels
+/*
+LogLevel represents the different logging levels:
+  - NONE: No logging
+  - ERROR: Only error messages
+  - INFO: Informational messages and above
+  - DEBUG: Debug messages and above
+  - ALL: All messages including high-frequency MIDI timing messages
+*/
 type LogLevel int
 
 const (
@@ -89,6 +96,14 @@ func SetLevel(level LogLevel) {
 	if globalLogger != nil {
 		globalLogger.level = level
 	}
+}
+
+// GetLevel retrieves the current logging level set from the config file or command line.
+func GetLevel() LogLevel {
+	if globalLogger != nil {
+		return globalLogger.level
+	}
+	return NONE
 }
 
 // GetChannel returns the message channel for sending log messages
