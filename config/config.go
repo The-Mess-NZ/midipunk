@@ -87,5 +87,6 @@ func LoadConfig(path string) (*MidiPunkConfig, error) {
 			cfg.Ports[i].Label = cfg.Ports[i].Device
 		}
 	}
+
 	return &cfg, nil
 }

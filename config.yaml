@@ -20,22 +20,22 @@ programNumber: 1
 ## For DIN ports, `device` specifies the system device path.
 ## A port must be defined here before it can be used in a route.
 ports:
+  # - id: "1"
+  #   type: "USB"
+  #   direction: "INPUT"
+  #   label: "88 Keys In"
   - id: "1"
     type: "USB"
     direction: "INPUT"
-    label: "88 Keys In"
-  - id: "2"
-    type: "USB"
-    direction: "OUTPUT"
     label: "JT-4000 Output"
-  - id: "3"
-    type: "USB"
-    direction: "OUTPUT"
-    label: "ARGON8M Output"
-  - id: "din1"
+  # - id: "3"
+  #   type: "USB"
+  #   direction: "OUTPUT"
+  #   label: "ARGON8M Output"
+  - id: "DIN2"
     type: "DIN"
     device: "/dev/ttyAMA2"
-    direction: "INPUT"
+    direction: "OUTPUT"
     label: "SQ-64 In"
 ## Routes define how MIDI messages are routed from inputs to outputs.
 ## If `channel` is specified, only messages to/from that channel are routed on that port.
@@ -45,9 +45,5 @@ routes:
     enabled: true
     inputs:
       - portId: "1"
-      - portId: "din1"
     outputs:
-      - portId: "2"
-        channel: 2
-      - portId: "3"
-        channel: 2
+      - portId: "DIN2"

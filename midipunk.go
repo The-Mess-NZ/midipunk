@@ -67,7 +67,14 @@ func main() {
 		case "USB":
 			pc = midiport.NewUSBPortConfig(p.ID, "", midiport.PortDirectionFromString(p.Direction), label)
 		case "DIN":
-			pc = midiport.NewDINPortConfig(p.ID, p.Device, midiport.PortDirectionFromString(p.Direction), label)
+			pc, err = midiport.NewDINPortConfig(p.ID, midiport.PortDirectionFromString(p.Direction), label)
+			if err != nil {
+				logger.Error("Failed to create DIN port config for %s: %v", p.ID, err)
+				log.Fatalf("Failed to create DIN port config for %s: %v", p.ID, err)
+			}
+		default:
+			logger.Error("Unknown port type for port %s: %s", p.ID, p.Type)
+			log.Fatalf("Unknown port type for port %s: %s", p.ID, p.Type)
 		}
 		portMap[p.ID] = pc
 	}

@@ -18,85 +18,198 @@ A MIDI port, is a physical device port, either input or output. So, a
 USB MIDI device, might have both an input and an output port configured.
 */
 type PortConfig struct {
-	portType  PortType      // Type of the MIDI port (USB or DIN)
-	id        string        // Unique identifier for the port (USB client number or DIN name)
-	path      string        // Device path for DIN ports (e.g., serial port path); unused for USB
-	direction PortDirection // Specifies if the port is an input or output
+	PortType  PortType      // Type of the MIDI port (USB or DIN)
+	ID        string        // Unique identifier for the port (USB client number or DIN name)
+	Direction PortDirection // Specifies if the port is an input or output
 	Serial    string        // Serial number for USB devices, used to uniquely identify devices of the same make
 	Label     string        // Label for UI display, set from configuration
+	dinPort   DinPort       // The DIN port (only relevant if PortType is DIN), set from ID
 }
+
+type DinPort int
+
+const (
+	DIN1 DinPort = 1
+	DIN2 DinPort = 2
+	DIN3 DinPort = 3
+	DIN4 DinPort = 4
+)
+
+/*
+String returns a string representation of the DIN port, e.g. "din1"
+*/
+func (d DinPort) String() string {
+	return fmt.Sprintf("DIN%d", d)
+}
+
+/*
+ParseDinPort parses a string like "din1" into a DinPort constant.
+*/
+func ParseDinPort(s string) (DinPort, error) {
+	switch strings.ToLower(s) {
+	case "din1":
+		return DIN1, nil
+	case "din2":
+		return DIN2, nil
+	case "din3":
+		return DIN3, nil
+	case "din4":
+		return DIN4, nil
+	default:
+		return 0, fmt.Errorf("invalid DIN port: %s", s)
+	}
+}
+
+/*
+GetSelectPin returns the GPIO pin used to select INPUT/OUTPUT mode for the DIN port.
+*/
+func (d DinPort) GetSelectPin() DinSelectPin {
+	switch d {
+	case DIN1:
+		return DIN1_SELECT_PIN
+	case DIN2:
+		return DIN2_SELECT_PIN
+	case DIN3:
+		return DIN3_SELECT_PIN
+	case DIN4:
+		return DIN4_SELECT_PIN
+	default:
+		return -1 // Invalid
+	}
+}
+
+/*
+GetPath returns the device path for the DIN port:
+  - /dev/ttyAMA0 for DIN1
+  - /dev/ttyAMA2 for DIN2
+  - /dev/ttyAMA3 for DIN3
+  - /dev/ttyAMA5 for DIN4
+*/
+func (d DinPort) GetPath() string {
+	switch d {
+	case DIN1:
+		return "/dev/ttyAMA0"
+	case DIN2:
+		return "/dev/ttyAMA2"
+	case DIN3:
+		return "/dev/ttyAMA3"
+	case DIN4:
+		return "/dev/ttyAMA5"
+	default:
+		return "" // Invalid
+	}
+}
+
+/*
+DinSelectPin represents the GPIO pin used to select whether the DIN is INPUT (LOW) or OUTPUT (HIGH).
+*/
+type DinSelectPin int
+
+const (
+	DIN1_SELECT_PIN DinSelectPin = 6
+	DIN2_SELECT_PIN DinSelectPin = 19
+	DIN3_SELECT_PIN DinSelectPin = 16
+	DIN4_SELECT_PIN DinSelectPin = 26
+)
+
+/*
+Whether the port is an input or output. Contains the drive mode for the select GPIO pin for raspi-gpio.
+Output mode sets the pin LOW, to turn off the optocoupler, and enable the output buffer.
+*/
+type DinMode string
+
+const (
+	DIN_MODE_INPUT  DinMode = "op dh"
+	DIN_MODE_OUTPUT DinMode = "op dl"
+)
 
 // NewUSBPortConfig creates a new PortConfig for a USB MIDI device
 func NewUSBPortConfig(id string, serial string, direction PortDirection, label string) *PortConfig {
 	return &PortConfig{
-		portType:  USB,
-		id:        id,
-		path:      "", // USB ports don't use path
-		direction: direction,
+		PortType:  USB,
+		ID:        id,
+		Direction: direction,
 		Serial:    serial, // set serial number for USB
 		Label:     label,
+		dinPort:   DIN1, // not used for USB
 	}
 }
 
 // NewDINPortConfig creates a new PortConfig for a DIN MIDI device
-func NewDINPortConfig(id string, path string, direction PortDirection, label string) *PortConfig {
+func NewDINPortConfig(id string, direction PortDirection, label string) (*PortConfig, error) {
+	dinPort, err := ParseDinPort(id)
+	if err != nil {
+		return nil, err
+	}
+
 	return &PortConfig{
-		portType:  DIN,
-		id:        id,
-		path:      path,
-		direction: direction,
+		PortType:  DIN,
+		ID:        id,
+		Direction: direction,
 		Serial:    "", // DIN ports do not have serial numbers
 		Label:     label,
-	}
+		dinPort:   dinPort,
+	}, nil
 }
 
 // GetPortType returns the port type
 func (pc *PortConfig) GetPortType() PortType {
-	return pc.portType
+	return pc.PortType
 }
 
 // GetID returns the port ID
 func (pc *PortConfig) GetID() string {
-	return pc.id
+	return pc.ID
 }
 
 // GetPath returns the port path
-func (pc *PortConfig) GetPath() string {
-	return pc.path
+func (pc *PortConfig) GetPath() (string, error) {
+	if pc.PortType == USB {
+		return "", nil // USB ports do not have a path
+	}
+
+	// For DIN, parse the ID to get the path
+	path, err := ParseDinPort(pc.ID)
+
+	if err != nil {
+		return "", err
+	}
+
+	return path.GetPath(), nil
 }
 
 // GetDirection returns the port direction
 func (pc *PortConfig) GetDirection() PortDirection {
-	return pc.direction
+	return pc.Direction
 }
 
 // String returns a string representation of the port config
 func (pc *PortConfig) String() string {
 	var typeStr, dirStr string
 
-	if pc.portType == USB {
+	if pc.PortType == USB {
 		typeStr = "USB"
 	} else {
 		typeStr = "DIN"
 	}
 
-	if pc.direction == INPUT {
+	if pc.Direction == INPUT {
 		dirStr = "INPUT"
 	} else {
 		dirStr = "OUTPUT"
 	}
 
-	return fmt.Sprintf("Port[%s %s %s %s]", typeStr, dirStr, pc.id, pc.path)
+	return fmt.Sprintf("Port[%s %s %s %s]", typeStr, dirStr, pc.ID, pc.Label)
 }
 
 // GetPortFullName returns the full name of the port, e.g. 'Oxygen Pro Mini USB MIDI'
 func (pc *PortConfig) GetPortFullName() string {
-	if pc.portType == USB {
+	if pc.PortType == USB {
 		// Try to get full name from aconnect -i
 		aconnectOut, err := exec.Command("aconnect", "-i").Output()
 		if err == nil {
 			lines := strings.Split(string(aconnectOut), "\n")
-			clientNum := pc.id
+			clientNum := pc.ID
 			for _, line := range lines {
 				if !strings.Contains(line, "client "+clientNum+":") {
 					continue
@@ -122,11 +235,11 @@ func (pc *PortConfig) GetPortFullName() string {
 
 // StartListening starts listening for MIDI messages on this port
 func (pc *PortConfig) StartListening(msgChannel chan<- midi.Message) (func(), error) {
-	if pc.direction != INPUT {
+	if pc.Direction != INPUT {
 		return nil, fmt.Errorf("cannot listen on OUTPUT port")
 	}
 
-	switch pc.portType {
+	switch pc.PortType {
 	case USB:
 		return pc.startUSBListening(msgChannel)
 	case DIN:
@@ -140,11 +253,11 @@ func (pc *PortConfig) StartListening(msgChannel chan<- midi.Message) (func(), er
 func (pc *PortConfig) startUSBListening(msgChannel chan<- midi.Message) (func(), error) {
 	// Get the USB MIDI port by ID (converting string to int)
 	var portNum int
-	fmt.Sscanf(pc.id, "%d", &portNum)
+	fmt.Sscanf(pc.ID, "%d", &portNum)
 
 	in, err := midi.InPort(portNum)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open USB MIDI port %s: %v", pc.id, err)
+		return nil, fmt.Errorf("failed to open USB MIDI port %s: %v", pc.ID, err)
 	}
 
 	stop, err := midi.ListenTo(in, func(msg midi.Message, timestamp int32) {
@@ -158,7 +271,7 @@ func (pc *PortConfig) startUSBListening(msgChannel chan<- midi.Message) (func(),
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to start listening on USB port %s: %v", pc.id, err)
+		return nil, fmt.Errorf("failed to start listening on USB port %s: %v", pc.ID, err)
 	}
 
 	return stop, nil
@@ -170,9 +283,25 @@ func (pc *PortConfig) startDINListening(msgChannel chan<- midi.Message) (func(),
 		BaudRate: 38400,
 	}
 
-	port, err := serial.Open(pc.path, mode)
+	// Set GPIO pin to INPUT mode for listening
+	selectPin := pc.dinPort.GetSelectPin()
+	if selectPin == -1 {
+		return nil, fmt.Errorf("invalid DIN port ID: %s", pc.ID)
+	}
+
+	args := append([]string{"set", fmt.Sprintf("%d", selectPin)}, strings.Fields(string(DIN_MODE_OUTPUT))...)
+	cmd := exec.Command("pinctrl", args...)
+	if err := cmd.Run(); err != nil {
+		logger.Error("Failed to set GPIO pin %d to OUTPUT HIGH for DIN %s: %v", selectPin, pc.ID, err)
+	} else {
+		logger.Info("Set GPIO pin %d to OUTPUT HIGH for DIN %s", selectPin, pc.ID)
+	}
+
+	path := pc.dinPort.GetPath()
+
+	port, err := serial.Open(path, mode)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open serial port %s: %v", pc.path, err)
+		return nil, fmt.Errorf("failed to open serial port %s: %v", path, err)
 	}
 
 	// Start reading in a goroutine
@@ -183,7 +312,7 @@ func (pc *PortConfig) startDINListening(msgChannel chan<- midi.Message) (func(),
 		for {
 			n, err := port.Read(buf)
 			if err != nil {
-				logger.Error("Error reading from serial port %s: %v", pc.path, err)
+				logger.Error("Error reading from serial port %s: %v", path, err)
 				return
 			}
 
@@ -211,10 +340,10 @@ func (pc *PortConfig) startDINListening(msgChannel chan<- midi.Message) (func(),
 
 // CreateDINSender creates a sender function for DIN MIDI output via serial
 func (pc *PortConfig) CreateDINSender() (func(msg midi.Message) error, error) {
-	if pc.portType != DIN {
+	if pc.PortType != DIN {
 		return nil, fmt.Errorf("cannot create DIN sender for non-DIN port")
 	}
-	if pc.direction != OUTPUT {
+	if pc.Direction != OUTPUT {
 		return nil, fmt.Errorf("cannot create sender for INPUT port")
 	}
 
@@ -222,9 +351,24 @@ func (pc *PortConfig) CreateDINSender() (func(msg midi.Message) error, error) {
 		BaudRate: 38400,
 	}
 
-	port, err := serial.Open(pc.path, mode)
+	selectPin := pc.dinPort.GetSelectPin()
+	if selectPin == -1 {
+		return nil, fmt.Errorf("invalid DIN port ID: %s", pc.ID)
+	}
+
+	// Set GPIO pin to OUTPUT HIGH for sending
+	args := append([]string{"set", fmt.Sprintf("%d", selectPin)}, strings.Fields(string(DIN_MODE_OUTPUT))...)
+	cmd := exec.Command("/usr/bin/pinctrl", args...)
+	if err := cmd.Run(); err != nil {
+		logger.Error("Failed to set GPIO pin %d to OUTPUT LOW for DIN %s: %v", selectPin, pc.ID, err)
+	} else {
+		logger.Info("Set GPIO pin %d to OUTPUT LOW for DIN %s", selectPin, pc.ID)
+	}
+
+	// Open the serial port
+	port, err := serial.Open(pc.dinPort.GetPath(), mode)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open serial port %s for output: %v", pc.path, err)
+		return nil, fmt.Errorf("failed to open serial port %s for output: %v", pc.dinPort.GetPath(), err)
 	}
 
 	// Create the sender function
@@ -236,7 +380,7 @@ func (pc *PortConfig) CreateDINSender() (func(msg midi.Message) error, error) {
 		// Write MIDI message bytes to serial port
 		n, err := port.Write([]byte(msg))
 		if err != nil {
-			return fmt.Errorf("failed to write to serial port %s: %v", pc.path, err)
+			return fmt.Errorf("failed to write to serial port %s: %v", pc.dinPort.GetPath(), err)
 		}
 
 		// Check if this is a timing message for appropriate logging
