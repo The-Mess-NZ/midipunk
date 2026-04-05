@@ -141,15 +141,12 @@ func (router *Router) shouldRouteMessage(msg *MessageWithSource, routeInput *Rou
 		return false
 	}
 
-	// If the route input specifies a channel (non-zero), check if the message matches
-	if routeInput.GetChannel() != 0 {
-		// Extract channel from MIDI message if it's a channel message
-		var msgChannel uint8
-		isChanMsg := msg.Message.GetChannel(&msgChannel)
+	// Extract channel from MIDI message if it's a channel message
+	var msgChannel uint8
+	isChanMsg := msg.Message.GetChannel(&msgChannel)
 
-		if !isChanMsg || msgChannel+1 != routeInput.GetChannel() {
-			return false // Not a channel message, cannot match channel
-		}
+	if !isChanMsg || (routeInput.GetChannel() != 0 && msgChannel+1 != routeInput.GetChannel()) {
+		return false // Not a channel message, cannot match channel
 	}
 
 	return true

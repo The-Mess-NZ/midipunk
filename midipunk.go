@@ -89,9 +89,6 @@ func main() {
 				continue
 			}
 			ch := in.Channel
-			if ch == 0 {
-				ch = 1
-			}
 			inputs = append(inputs, midirouter.NewRouteInput(uint8(ch), pc, in.Label))
 		}
 		var outputs []*midirouter.RouteOutput
@@ -101,9 +98,6 @@ func main() {
 				continue
 			}
 			ch := out.Channel
-			if ch == 0 {
-				ch = 1 // default to channel 1 if not set
-			}
 			outputs = append(outputs, midirouter.NewRouteOutput(uint8(ch), pc, out.Label))
 		}
 		route := midirouter.NewRoute(inputs, outputs, r.Label)

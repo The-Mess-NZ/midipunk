@@ -26,17 +26,16 @@ ports:
   #   label: "88 Keys In"
   - id: "1"
     type: "USB"
-    direction: "INPUT"
-    label: "JT-4000 Output"
+    direction: "OUTPUT"
+    label: "JT-4000 Out"
   # - id: "3"
   #   type: "USB"
   #   direction: "OUTPUT"
   #   label: "ARGON8M Output"
-  - id: "DIN2"
-    type: "DIN"
-    device: "/dev/ttyAMA2"
-    direction: "OUTPUT"
-    label: "SQ-64 In"
+  - id: "2"
+    type: "USB"
+    direction: "INPUT"
+    label: "Oxy Pro Mini In"
 ## Routes define how MIDI messages are routed from inputs to outputs.
 ## If `channel` is specified, only messages to/from that channel are routed on that port.
 ## If `channel` is omitted, messages are routed to/from all channels on that port.
@@ -44,6 +43,7 @@ routes:
   - label: "88 Keys to JT-4000"
     enabled: true
     inputs:
-      - portId: "1"
+      - portId: "2"
     outputs:
-      - portId: "DIN2"
+      - portId: "1"
+        channel: 1
