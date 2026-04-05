@@ -1,11 +1,16 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/The-Mess-NZ/midipunk/api"
 	"github.com/The-Mess-NZ/midipunk/config"
+	"github.com/The-Mess-NZ/midipunk/gooeyui"
 	"github.com/The-Mess-NZ/midipunk/logger"
 	"github.com/The-Mess-NZ/midipunk/midiport"
 	"github.com/The-Mess-NZ/midipunk/midirouter"
@@ -16,6 +21,8 @@ import (
 
 func main() {
 	defer midi.CloseDriver()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	// Parse command-line arguments
 	var logLevel = flag.String("log-level", "", "Set log level (none, error, info, debug, all) - overrides config file")
@@ -130,7 +137,11 @@ func main() {
 	}()
 
 	go api.StartAPIServer()
+	go gooeyui.NewController(cfg).Run(ctx)
 
-	// Keep main thread running
-	select {}
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	<-stop
+	logger.Info("MidiPunk shutting down")
+	cancel()
 }

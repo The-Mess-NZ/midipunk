@@ -65,6 +65,7 @@ type RouteYAML struct {
 	Inputs  []RouteInputYAML  `yaml:"inputs"`
 	Outputs []RouteOutputYAML `yaml:"outputs"`
 	Label   string            `yaml:"label,omitempty"`
+	Enabled *bool             `yaml:"enabled,omitempty"`
 }
 
 // LoadConfig loads the MidiPunk configuration from a YAML file at the given path.
@@ -87,6 +88,17 @@ func LoadConfig(path string) (*MidiPunkConfig, error) {
 			cfg.Ports[i].Label = cfg.Ports[i].Device
 		}
 	}
+	for i := range cfg.Routes {
+		if cfg.Routes[i].Enabled == nil {
+			enabled := true
+			cfg.Routes[i].Enabled = &enabled
+		}
+	}
 
 	return &cfg, nil
+}
+
+// IsEnabled returns true when a route is enabled or omitted from the YAML.
+func (r RouteYAML) IsEnabled() bool {
+	return r.Enabled == nil || *r.Enabled
 }

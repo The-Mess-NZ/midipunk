@@ -24,7 +24,7 @@ ports:
   #   type: "USB"
   #   direction: "INPUT"
   #   label: "88 Keys In"
-  - id: "1"
+  - id: "5"
     type: "USB"
     direction: "OUTPUT"
     label: "JT-4000 Out"
@@ -32,7 +32,7 @@ ports:
   #   type: "USB"
   #   direction: "OUTPUT"
   #   label: "ARGON8M Output"
-  - id: "2"
+  - id: "1"
     type: "USB"
     direction: "INPUT"
     label: "Oxy Pro Mini In"
@@ -43,7 +43,7 @@ routes:
   - label: "88 Keys to JT-4000"
     enabled: true
     inputs:
-      - portId: "2"
-    outputs:
       - portId: "1"
+    outputs:
+      - portId: "5"
         channel: 1
