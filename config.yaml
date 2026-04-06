@@ -19,6 +19,7 @@ programNumber: 1
 ## `label` is a human-readable name for the port.
 ## For DIN ports, `device` specifies the system device path.
 ## A port must be defined here before it can be used in a route.
+## TODO: Custom colours.
 ports:
   # - id: "1"
   #   type: "USB"
@@ -39,6 +40,7 @@ ports:
 ## Routes define how MIDI messages are routed from inputs to outputs.
 ## If `channel` is specified, only messages to/from that channel are routed on that port.
 ## If `channel` is omitted, messages are routed to/from all channels on that port.
+## TODO: Custom colours.
 routes:
   - label: "88 Keys to JT-4000"
     enabled: true

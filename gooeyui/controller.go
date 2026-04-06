@@ -21,6 +21,21 @@ const (
 	actionBackPorts    = "back_ports"
 	actionViewPrefix   = "view_port:"
 	actionTogglePrefix = "toggle_route:"
+	actionPageFirst    = "page_first"
+	actionPagePrev     = "page_prev"
+	actionPageNext     = "page_next"
+	actionPageLast     = "page_last"
+)
+
+type sceneView string
+
+type hardwareInputReport struct {
+	Action string `json:"action,omitempty"`
+}
+
+const (
+	sceneViewPorts  sceneView = "ports"
+	sceneViewRoutes sceneView = "routes"
 )
 
 // Controller drives Gooey from Midipunk's current config state.
@@ -29,6 +44,9 @@ type Controller struct {
 	client         *gooeyipc.Client
 	config         *config.MidiPunkConfig
 	routes         []*midirouter.Route
+	currentView    sceneView
+	portsPage      int
+	routesPage     int
 	selectedPortID string
 }
 
@@ -38,7 +56,7 @@ func NewController(cfg *config.MidiPunkConfig, routes []*midirouter.Route) *Cont
 	if socketPath == "" {
 		socketPath = defaultSocketPath
 	}
-	return &Controller{socketPath: socketPath, config: cfg, routes: routes}
+	return &Controller{socketPath: socketPath, config: cfg, routes: routes, currentView: sceneViewPorts}
 }
 
 // Run maintains the Gooey client connection and handles UI navigation events.
@@ -113,6 +131,14 @@ func (c *Controller) handleEvent(event gooeyipc.Event) {
 		}
 		c.handleAction(interaction.Action)
 
+	case gooeyipc.EventInputEvent:
+		var report hardwareInputReport
+		if err := gooeyipc.DecodeEventPayload(event, &report); err != nil {
+			logger.Error("Failed to decode Gooey hardware input event: %v", err)
+			return
+		}
+		c.handleAction(report.Action)
+
 	case gooeyipc.EventProtocolError:
 		var protocolErr gooeyipc.ErrorPayload
 		if err := gooeyipc.DecodeEventPayload(event, &protocolErr); err != nil {
@@ -153,42 +179,117 @@ func (c *Controller) handleAction(action string) {
 		return
 	}
 
+	changed, err := c.applyAction(action)
+	if err != nil {
+		logger.Error("Failed to handle Gooey action %s: %v", action, err)
+		return
+	}
+	if !changed {
+		return
+	}
+	if err := c.replaceCurrentScene(action); err != nil {
+		logger.Error("Failed to replace Gooey scene after action %s: %v", action, err)
+	}
+}
+
+func (c *Controller) applyAction(action string) (bool, error) {
 	switch {
 	case action == actionBackPorts:
+		if c.currentView == sceneViewPorts {
+			return false, nil
+		}
+		c.currentView = sceneViewPorts
 		c.selectedPortID = ""
+		c.routesPage = 0
+		return true, nil
 	case strings.HasPrefix(action, actionViewPrefix):
-		c.selectedPortID = strings.TrimPrefix(action, actionViewPrefix)
+		portID := strings.TrimPrefix(action, actionViewPrefix)
+		if _, ok := findPort(c.config, portID); !ok {
+			return false, sceneErrorf("unknown port %q", portID)
+		}
+		if c.currentView == sceneViewRoutes && c.selectedPortID == portID {
+			return false, nil
+		}
+		c.currentView = sceneViewRoutes
+		if c.selectedPortID != portID {
+			c.routesPage = 0
+		}
+		c.selectedPortID = portID
+		return true, nil
 	case strings.HasPrefix(action, actionTogglePrefix):
 		if err := c.toggleRoute(strings.TrimPrefix(action, actionTogglePrefix)); err != nil {
-			logger.Error("Failed to toggle route via Gooey action %s: %v", action, err)
-			return
+			return false, err
 		}
+		return true, nil
+	case action == actionPageFirst:
+		return c.setCurrentPage(0)
+	case action == actionPagePrev:
+		return c.setCurrentPage(c.currentPage() - 1)
+	case action == actionPageNext:
+		return c.setCurrentPage(c.currentPage() + 1)
+	case action == actionPageLast:
+		return c.setCurrentPage(c.totalPages() - 1)
 	default:
 		logger.Info("Ignoring unknown Gooey UI action: %s", action)
-		return
+		return false, nil
 	}
+}
 
+func (c *Controller) replaceCurrentScene(action string) error {
 	scene, err := c.currentScene()
 	if err != nil {
-		logger.Error("Failed to build Gooey scene for action %s: %v", action, err)
-		return
+		return err
+	}
+	if c.client == nil {
+		return nil
 	}
 	if err := c.client.ReplaceScene(scene); err != nil {
-		logger.Error("Failed to replace Gooey scene after action %s: %v", action, err)
-		return
+		return err
 	}
 	if err := c.client.RequestStatus(); err != nil {
 		logger.Error("Failed to request Gooey status after action %s: %v", action, err)
 	}
 	logger.Info("Updated Gooey scene after action %s", action)
+	return nil
 }
 
 // TODO: The current scene is determined by whether there's a selectedPortID or not. This is not the desired pattern.... But we're just testing for now.
 func (c *Controller) currentScene() (gooeycomponents.SceneDocument, error) {
-	if c.selectedPortID == "" {
-		return buildPortsScene(c.config)
+	if c.currentView == sceneViewRoutes && c.selectedPortID != "" {
+		return buildRoutesScene(c.config, c.selectedPortID, c.routesPage)
 	}
-	return buildRoutesScene(c.config, c.selectedPortID)
+	return buildPortsScene(c.config, c.portsPage)
+}
+
+func (c *Controller) currentPage() int {
+	if c.currentView == sceneViewRoutes {
+		return c.routesPage
+	}
+	return c.portsPage
+}
+
+func (c *Controller) setCurrentPage(page int) (bool, error) {
+	totalPages := c.totalPages()
+	if totalPages < 1 {
+		return false, nil
+	}
+	nextPage := clampPageIndex(page, totalPages)
+	if nextPage == c.currentPage() {
+		return false, nil
+	}
+	if c.currentView == sceneViewRoutes {
+		c.routesPage = nextPage
+		return true, nil
+	}
+	c.portsPage = nextPage
+	return true, nil
+}
+
+func (c *Controller) totalPages() int {
+	if c.currentView == sceneViewRoutes && c.selectedPortID != "" {
+		return routesPageCount(c.config, c.selectedPortID)
+	}
+	return portsPageCount(c.config)
 }
 
 func (c *Controller) toggleRoute(indexText string) error {
