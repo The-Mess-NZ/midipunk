@@ -8,6 +8,7 @@ import (
 	"github.com/The-Mess-NZ/midipunk/logger"
 )
 
+// TODO: The API is hardly realised.
 func StartAPIServer() {
 	http.HandleFunc("/config/get", handlers.ConfigGetHandler)
 	http.HandleFunc("/config/put", handlers.ConfigPutHandler)

@@ -2,7 +2,7 @@
 ## Multiple configurations can be created and loaded via the API or web interface.
 
 ## The label is a human-readable name for the configuration.
-label: "Example Route"
+label: "Example Program 1"
 ## Set the logging level for the route. This controls the verbosity of log messages.
 ## Options are: "NONE", "ERROR", "INFO", "DEBUG", "ALL"
 ## Any log level above "INFO" may producte a large volume of log messages,

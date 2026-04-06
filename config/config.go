@@ -38,9 +38,9 @@ type PortConfigYAML struct {
 }
 
 // RouteInputYAML specifies a source port and MIDI channel for routing.
-// PortID: The ID of the input port.
-// Channel: MIDI channel number (1-16) to listen to.
-// Label: Optional label for UI display.
+//   - PortID: The ID of the input port.
+//   - Channel: MIDI channel number (1-16) to listen to.
+//   - Label: Optional label for UI display.
 type RouteInputYAML struct {
 	PortID  string `yaml:"portId"`
 	Channel int    `yaml:"channel"`

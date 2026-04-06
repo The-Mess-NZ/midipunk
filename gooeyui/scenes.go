@@ -16,8 +16,7 @@ func buildPortsScene(cfg *config.MidiPunkConfig) (gooeycomponents.SceneDocument,
 	}
 
 	children := []gooeycomponents.SceneNode{
-		makeTitleNode("ports-title", "MidiPunk Ports"),
-		makeSubheadNode("ports-subtitle", fmt.Sprintf("%s • tap a port to view routes", cfg.Label)),
+		makeTitleNode("ports-title", fmt.Sprintf("%s", cfg.Label)),
 	}
 
 	for _, port := range cfg.Ports {
