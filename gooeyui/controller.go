@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -11,13 +12,15 @@ import (
 	gooeyipc "github.com/The-Mess-NZ/gooey/pkg/ipc"
 	"github.com/The-Mess-NZ/midipunk/config"
 	"github.com/The-Mess-NZ/midipunk/logger"
+	"github.com/The-Mess-NZ/midipunk/midirouter"
 )
 
 const (
-	defaultSocketPath = "/tmp/gooey.sock"
-	reconnectDelay    = 2 * time.Second
-	actionBackPorts   = "back_ports"
-	actionViewPrefix  = "view_port:"
+	defaultSocketPath  = "/tmp/gooey.sock"
+	reconnectDelay     = 2 * time.Second
+	actionBackPorts    = "back_ports"
+	actionViewPrefix   = "view_port:"
+	actionTogglePrefix = "toggle_route:"
 )
 
 // Controller drives Gooey from Midipunk's current config state.
@@ -25,16 +28,17 @@ type Controller struct {
 	socketPath     string
 	client         *gooeyipc.Client
 	config         *config.MidiPunkConfig
+	routes         []*midirouter.Route
 	selectedPortID string
 }
 
 // NewController creates a Gooey UI controller for the supplied Midipunk config.
-func NewController(cfg *config.MidiPunkConfig) *Controller {
+func NewController(cfg *config.MidiPunkConfig, routes []*midirouter.Route) *Controller {
 	socketPath := os.Getenv("MIDIPUNK_GOOEY_SOCKET")
 	if socketPath == "" {
 		socketPath = defaultSocketPath
 	}
-	return &Controller{socketPath: socketPath, config: cfg}
+	return &Controller{socketPath: socketPath, config: cfg, routes: routes}
 }
 
 // Run maintains the Gooey client connection and handles UI navigation events.
@@ -154,6 +158,11 @@ func (c *Controller) handleAction(action string) {
 		c.selectedPortID = ""
 	case strings.HasPrefix(action, actionViewPrefix):
 		c.selectedPortID = strings.TrimPrefix(action, actionViewPrefix)
+	case strings.HasPrefix(action, actionTogglePrefix):
+		if err := c.toggleRoute(strings.TrimPrefix(action, actionTogglePrefix)); err != nil {
+			logger.Error("Failed to toggle route via Gooey action %s: %v", action, err)
+			return
+		}
 	default:
 		logger.Info("Ignoring unknown Gooey UI action: %s", action)
 		return
@@ -182,6 +191,24 @@ func (c *Controller) currentScene() (gooeycomponents.SceneDocument, error) {
 	return buildRoutesScene(c.config, c.selectedPortID)
 }
 
+func (c *Controller) toggleRoute(indexText string) error {
+	index, err := strconv.Atoi(indexText)
+	if err != nil {
+		return sceneErrorf("invalid route index %q", indexText)
+	}
+	if index < 0 || index >= len(c.config.Routes) {
+		return sceneErrorf("route index %d out of range", index)
+	}
+
+	enabled := !c.config.Routes[index].IsEnabled()
+	c.config.Routes[index].SetEnabled(enabled)
+	if index < len(c.routes) && c.routes[index] != nil {
+		c.routes[index].SetEnabled(enabled)
+	}
+	logger.Info("Route %d now %s", index, enabledState(enabled))
+	return nil
+}
+
 func (c *Controller) closeClient() {
 	if c.client != nil {
 		_ = c.client.Close()
@@ -202,4 +229,11 @@ func waitForRetry(ctx context.Context, delay time.Duration) bool {
 
 func sceneErrorf(format string, args ...any) error {
 	return fmt.Errorf(format, args...)
+}
+
+func enabledState(enabled bool) string {
+	if enabled {
+		return "enabled"
+	}
+	return "disabled"
 }

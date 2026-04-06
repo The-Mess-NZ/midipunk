@@ -102,3 +102,9 @@ func LoadConfig(path string) (*MidiPunkConfig, error) {
 func (r RouteYAML) IsEnabled() bool {
 	return r.Enabled == nil || *r.Enabled
 }
+
+// SetEnabled updates the route enabled state in memory.
+// TODO: We should send an "all notes off" message to all outputs when disabling a route to prevent stuck notes. Perhaps optionally.
+func (r *RouteYAML) SetEnabled(enabled bool) {
+	r.Enabled = &enabled
+}

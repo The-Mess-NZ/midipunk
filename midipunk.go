@@ -107,7 +107,7 @@ func main() {
 			ch := out.Channel
 			outputs = append(outputs, midirouter.NewRouteOutput(uint8(ch), pc, out.Label))
 		}
-		route := midirouter.NewRoute(inputs, outputs, r.Label)
+		route := midirouter.NewRoute(inputs, outputs, r.Label, r.IsEnabled())
 		routes = append(routes, route)
 	}
 
@@ -137,7 +137,8 @@ func main() {
 	}()
 
 	go api.StartAPIServer()
-	go gooeyui.NewController(cfg).Run(ctx)
+	// TODO: Do we need to pass the actual routes? In the future can we just pass the config, and have the controller re-read as changes are made?
+	go gooeyui.NewController(cfg, routes).Run(ctx)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)

@@ -185,6 +185,10 @@ func (router *Router) handleMessages() {
 
 		// Find all routes that should handle this message
 		for _, route := range router.routes {
+			if !route.IsEnabled() {
+				continue
+			}
+
 			// Check if ANY input in this route matches the incoming message
 			var matchingInput *RouteInput
 			for _, routeInput := range route.GetInputs() {

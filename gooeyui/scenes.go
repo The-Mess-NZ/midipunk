@@ -8,6 +8,8 @@ import (
 	"github.com/The-Mess-NZ/midipunk/config"
 )
 
+// TODO: Separate scenes out into their own files.
+
 func buildPortsScene(cfg *config.MidiPunkConfig) (gooeycomponents.SceneDocument, error) {
 	if cfg == nil {
 		return gooeycomponents.SceneDocument{}, sceneErrorf("config is nil")
@@ -19,26 +21,7 @@ func buildPortsScene(cfg *config.MidiPunkConfig) (gooeycomponents.SceneDocument,
 	}
 
 	for _, port := range cfg.Ports {
-		text := port.Label
-		if text == "" {
-			text = port.ID
-		}
-		text = fmt.Sprintf("%s\n%s %s", text, strings.ToUpper(port.Type), strings.ToUpper(port.Direction))
-		children = append(children, gooeycomponents.SceneNode{
-			ID:     "port-" + sanitizeID(port.ID),
-			Type:   gooeycomponents.NodeTypeButton,
-			Text:   text,
-			Action: actionViewPrefix + port.ID,
-			Bounds: &gooeycomponents.Rect{Height: 42},
-			Style: &gooeycomponents.Style{
-				Background:  portButtonBackground(port.Direction),
-				Foreground:  "#F2F2E9",
-				BorderColor: "#9BB3C3FF",
-				BorderWidth: 2,
-				FontSize:    13,
-				TextPadding: 5,
-			},
-		})
+		children = append(children, makePortNode(cfg, port))
 	}
 
 	children = append(children, makeFooterNode("ports-footer", fmt.Sprintf("%d configured port(s)", len(cfg.Ports))))
@@ -57,6 +40,77 @@ func buildPortsScene(cfg *config.MidiPunkConfig) (gooeycomponents.SceneDocument,
 			Children: children,
 		},
 	}, nil
+}
+
+func makePortNode(cfg *config.MidiPunkConfig, port config.PortConfigYAML) gooeycomponents.SceneNode {
+	counts := portRouteCounts(cfg, port.ID)
+	portLabel := port.Label
+	if portLabel == "" {
+		portLabel = port.ID
+	}
+
+	return gooeycomponents.SceneNode{
+		ID:     "port-" + sanitizeID(port.ID),
+		Type:   gooeycomponents.NodeTypeContainer,
+		Action: actionViewPrefix + port.ID,
+		Bounds: &gooeycomponents.Rect{Height: 54},
+		Layout: &gooeycomponents.Layout{Direction: gooeycomponents.LayoutDirectionHorizontal, Gap: 10, Padding: gooeycomponents.Insets{Top: 6, Right: 8, Bottom: 6, Left: 8}},
+		Style: &gooeycomponents.Style{
+			Background:  portButtonBackground(port.Direction),
+			BorderColor: "#9BB3C3FF",
+			BorderWidth: 2,
+		},
+		Children: []gooeycomponents.SceneNode{
+			{
+				ID:     "port-copy-" + sanitizeID(port.ID),
+				Type:   gooeycomponents.NodeTypeContainer,
+				Layout: &gooeycomponents.Layout{Direction: gooeycomponents.LayoutDirectionVertical, Gap: 2, Padding: gooeycomponents.Insets{Top: 2, Right: 0, Bottom: 2, Left: 0}},
+				Children: []gooeycomponents.SceneNode{
+					{
+						ID:     "port-label-" + sanitizeID(port.ID),
+						Type:   gooeycomponents.NodeTypeLabel,
+						Text:   portLabel,
+						Bounds: &gooeycomponents.Rect{Height: 18},
+						Style:  &gooeycomponents.Style{Foreground: "#F2F2E9", FontSize: 14, TextPadding: 2},
+					},
+					{
+						ID:     "port-meta-" + sanitizeID(port.ID),
+						Type:   gooeycomponents.NodeTypeLabel,
+						Text:   fmt.Sprintf("%s %s", strings.ToUpper(port.Type), strings.ToUpper(port.Direction)),
+						Bounds: &gooeycomponents.Rect{Height: 14},
+						Style:  &gooeycomponents.Style{Foreground: "#D6E4ED", FontSize: 11, TextPadding: 2},
+					},
+				},
+			},
+			{
+				ID:     "port-badges-" + sanitizeID(port.ID),
+				Type:   gooeycomponents.NodeTypeContainer,
+				Bounds: &gooeycomponents.Rect{Width: 82},
+				Layout: &gooeycomponents.Layout{Direction: gooeycomponents.LayoutDirectionVertical, Gap: 4},
+				Children: []gooeycomponents.SceneNode{
+					makePortBadgeNode("port-active-badge-"+sanitizeID(port.ID), fmt.Sprintf("ON %d", counts.Active), "#2F6B4FFF", "#9ED8B5FF"),
+					makePortBadgeNode("port-inactive-badge-"+sanitizeID(port.ID), fmt.Sprintf("OFF %d", counts.Inactive), "#3D4650FF", "#8D9AA6FF"),
+				},
+			},
+		},
+	}
+}
+
+func makePortBadgeNode(id, text, background, border string) gooeycomponents.SceneNode {
+	return gooeycomponents.SceneNode{
+		ID:     id,
+		Type:   gooeycomponents.NodeTypeLabel,
+		Text:   text,
+		Bounds: &gooeycomponents.Rect{Height: 18},
+		Style: &gooeycomponents.Style{
+			Background:  background,
+			Foreground:  "#F2F2E9",
+			BorderColor: border,
+			BorderWidth: 1,
+			FontSize:    10,
+			TextPadding: 3,
+		},
+	}
 }
 
 func buildRoutesScene(cfg *config.MidiPunkConfig, portID string) (gooeycomponents.SceneDocument, error) {
@@ -84,19 +138,37 @@ func buildRoutesScene(cfg *config.MidiPunkConfig, portID string) (gooeycomponent
 			Style:  &gooeycomponents.Style{Foreground: "#D8DEE4", FontSize: 13, TextPadding: 4},
 		})
 	} else {
-		for index, route := range associated {
+		for _, route := range associated {
 			children = append(children, gooeycomponents.SceneNode{
-				ID:     fmt.Sprintf("route-%s-%d", sanitizeID(portID), index),
-				Type:   gooeycomponents.NodeTypeLabel,
-				Text:   routeSummary(route),
-				Bounds: &gooeycomponents.Rect{Height: 54},
+				ID:     fmt.Sprintf("route-card-%s-%d", sanitizeID(portID), route.Index),
+				Type:   gooeycomponents.NodeTypeContainer,
+				Bounds: &gooeycomponents.Rect{Height: 62},
+				Layout: &gooeycomponents.Layout{Direction: gooeycomponents.LayoutDirectionHorizontal, Gap: 8, Padding: gooeycomponents.Insets{Top: 6, Right: 6, Bottom: 6, Left: 6}},
 				Style: &gooeycomponents.Style{
 					Background:  "#1A252DFF",
-					Foreground:  "#F2F2E9",
 					BorderColor: "#415664FF",
 					BorderWidth: 1,
-					FontSize:    12,
-					TextPadding: 5,
+				},
+				Children: []gooeycomponents.SceneNode{
+					{
+						ID:     fmt.Sprintf("route-label-%s-%d", sanitizeID(portID), route.Index),
+						Type:   gooeycomponents.NodeTypeLabel,
+						Text:   routeSummary(route.RouteYAML),
+						Bounds: &gooeycomponents.Rect{Width: 150},
+						Style:  &gooeycomponents.Style{Foreground: "#F2F2E9", FontSize: 12, TextPadding: 4},
+					},
+					{
+						ID:      fmt.Sprintf("route-toggle-%s-%d", sanitizeID(portID), route.Index),
+						Type:    gooeycomponents.NodeTypeToggle,
+						Action:  fmt.Sprintf("%s%d", actionTogglePrefix, route.Index),
+						Checked: boolPtr(route.IsEnabled()),
+						Style: &gooeycomponents.Style{
+							Background:  toggleBackground(route.IsEnabled()),
+							Foreground:  "#F2F2E9",
+							BorderColor: "#B7D5C5FF",
+							BorderWidth: 2,
+						},
+					},
 				},
 			})
 		}
@@ -184,14 +256,39 @@ func portSceneTitle(port config.PortConfigYAML) string {
 	return fmt.Sprintf("%s Routes", label)
 }
 
-func routesForPort(cfg *config.MidiPunkConfig, portID string) []config.RouteYAML {
-	matches := make([]config.RouteYAML, 0)
-	for _, route := range cfg.Routes {
+type indexedRoute struct {
+	Index int
+	config.RouteYAML
+}
+
+type routeCounts struct {
+	Active   int
+	Inactive int
+}
+
+func routesForPort(cfg *config.MidiPunkConfig, portID string) []indexedRoute {
+	matches := make([]indexedRoute, 0)
+	for index, route := range cfg.Routes {
 		if routeUsesPort(route, portID) {
-			matches = append(matches, route)
+			matches = append(matches, indexedRoute{Index: index, RouteYAML: route})
 		}
 	}
 	return matches
+}
+
+func portRouteCounts(cfg *config.MidiPunkConfig, portID string) routeCounts {
+	counts := routeCounts{}
+	for _, route := range cfg.Routes {
+		if !routeUsesPort(route, portID) {
+			continue
+		}
+		if route.IsEnabled() {
+			counts.Active++
+			continue
+		}
+		counts.Inactive++
+	}
+	return counts
 }
 
 func routeUsesPort(route config.RouteYAML, portID string) bool {
@@ -262,4 +359,15 @@ func findPort(cfg *config.MidiPunkConfig, portID string) (config.PortConfigYAML,
 func sanitizeID(value string) string {
 	replacer := strings.NewReplacer("/", "-", " ", "-", ":", "-", ".", "-")
 	return replacer.Replace(value)
+}
+
+func boolPtr(value bool) *bool {
+	return &value
+}
+
+func toggleBackground(enabled bool) string {
+	if enabled {
+		return "#2F6B4FFF"
+	}
+	return "#4A5056FF"
 }
